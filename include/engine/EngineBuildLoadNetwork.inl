@@ -43,6 +43,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     m_normalize = normalize;
 
     // Read the serialized model from disk
+    std::cout <<trtModelPath<< trtModelPath <<std::endl;
     if (!Util::doesFileExist(trtModelPath)) {
         auto msg = "Error, unable to read TensorRT model at path: " + trtModelPath;
         spdlog::error(msg);

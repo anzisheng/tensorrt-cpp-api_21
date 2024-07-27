@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
 project(tensorrt_cpp_api)
 
+
+# TODO: Specify the path to TensorRT root dir
+set(TensorRT_DIR /usr/local/TensorRT-8.6.1.6/)
 # Use ccache to speed up rebuilds
 include(cmake/ccache.cmake)
 
@@ -13,7 +16,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 # TODO: Specify the path to TensorRT root dir
 if (NOT TensorRT_DIR)
-    set(TensorRT_DIR /home/cyrus/work/libs/TensorRT-10.0.0.6/)
+    set(TensorRT_DIR /usr/local/TensorRT-8.6.1.6/)
 endif()
 # Use the correct version of CUDA
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
@@ -25,9 +28,13 @@ find_package(OpenCV REQUIRED)
 find_package(fmt REQUIRED)
 
 add_library(tensorrt_cpp_api SHARED
-        src/engine.cpp)
+        src/engine.cpp
+        src/yolov8.cpp
+        src/utils.cpp
+        src/utile.cpp
+        )
 
-target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} include include/interfaces)
+target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} include . include/interfaces)
 target_link_libraries(tensorrt_cpp_api PUBLIC ${OpenCV_LIBS} ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${TensorRT_LIBRARIES} fmt::fmt)
 
 add_executable(run_inference_benchmark src/main.cpp)

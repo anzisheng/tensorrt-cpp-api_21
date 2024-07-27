@@ -4,7 +4,7 @@
 #include <chrono>
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/opencv.hpp>
-
+#include "yolov8.h"
 int main(int argc, char *argv[]) {
     CommandLineArguments arguments;
 
@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
     spdlog::set_level(logLevel);
 
     // Parse the command line arguments
-    if (!parseArguments(argc, argv, arguments)) {
-        return -1;
-    }
+    // if (!parseArguments(argc, argv, arguments)) {
+    //     return -1;
+    // }
 
     // Specify our GPU inference configuration options
     Options options;
@@ -51,120 +51,139 @@ int main(int argc, char *argv[]) {
     //    subVals = {0.5f, 0.5f, 0.5f};
     //    divVals = {0.5f, 0.5f, 0.5f};
     //    normalize = true;
+    YoloV8Config config;
+    std::string inputImage0 = "1.jpg";
+    YoloV8 yoloV8("yoloface_8n.onnx", config);
+    std::cout <<"yoloface_8n.onnx has trted"<<std::endl;
+    cv::Mat img0 = cv::imread( "1.jpg");
+    cv::Mat source_img = img0.clone();
 
-    if (!arguments.onnxModelPath.empty()) {
-        // Build the onnx model into a TensorRT engine file, and load the TensorRT
-        // engine file into memory.
-        bool succ = engine.buildLoadNetwork(arguments.onnxModelPath, subVals, divVals, normalize);
-        if (!succ) {
-            throw std::runtime_error("Unable to build or load TensorRT engine.");
-        }
-    } else {
-        // Load the TensorRT engine file directly
-        bool succ = engine.loadNetwork(arguments.trtModelPath, subVals, divVals, normalize);
-        if (!succ) {
-            const std::string msg = "Unable to load TensorRT engine.";
-            spdlog::error(msg);
-            throw std::runtime_error(msg);
-        }
-    }
+    std::vector<Object>objects = yoloV8.detectObjects(img0);
+    std::cout <<"has detected objects"<<std::endl;
+
+    // Draw the bounding boxes on the image
+    yoloV8.drawObjectLabels(img0, objects);
+
+    std::cout << "Detected " << objects.size() << " objects" << std::endl;
+
+    //Save the image to disk
+    const auto outputName = inputImage0.substr(0, inputImage0.find_last_of('.')) + "_annotated.jpg";
+    cv::imwrite(outputName, img0);
+    std::cout << "Saved annotated image to: " << outputName << std::endl;
+
+    // if (!arguments.onnxModelPath.empty()) {
+    //     // Build the onnx model into a TensorRT engine file, and load the TensorRT
+    //     // engine file into memory.
+    //     bool succ = engine.buildLoadNetwork(arguments.onnxModelPath, subVals, divVals, normalize);
+    //     if (!succ) {
+    //         throw std::runtime_error("Unable to build or load TensorRT engine.");
+    //     }
+    // } else {
+    //     // Load the TensorRT engine file directly
+    //     bool succ = engine.loadNetwork(arguments.trtModelPath, subVals, divVals, normalize);
+    //     if (!succ) {
+    //         const std::string msg = "Unable to load TensorRT engine.";
+    //         spdlog::error(msg);
+    //         throw std::runtime_error(msg);
+    //     }
+    // }
 
     // Read the input image
     // TODO: You will need to read the input image required for your model
-    const std::string inputImage = "../inputs/team.jpg";
-    auto cpuImg = cv::imread(inputImage);
-    if (cpuImg.empty()) {
-        const std::string msg = "Unable to read image at path: " + inputImage;
-        spdlog::error(msg);
-        throw std::runtime_error(msg);
-    }
+    // const std::string inputImage = "6.jpg";
+    // auto cpuImg = cv::imread(inputImage);
+    // if (cpuImg.empty()) {
+    //     const std::string msg = "Unable to read image at path: " + inputImage;
+    //     spdlog::error(msg);
+    //     throw std::runtime_error(msg);
+    // }
 
-    // Upload the image GPU memory
-    cv::cuda::GpuMat img;
-    img.upload(cpuImg);
+    // // Upload the image GPU memory
+    // cv::cuda::GpuMat img;
+    // img.upload(cpuImg);
 
-    // The model expects RGB input
-    cv::cuda::cvtColor(img, img, cv::COLOR_BGR2RGB);
+    // // The model expects RGB input
+    // cv::cuda::cvtColor(img, img, cv::COLOR_BGR2RGB);
 
-    // In the following section we populate the input vectors to later pass for
-    // inference
-    const auto &inputDims = engine.getInputDims();
-    std::vector<std::vector<cv::cuda::GpuMat>> inputs;
+    // // In the following section we populate the input vectors to later pass for
+    // // inference
+    // const auto &inputDims = engine.getInputDims();
+    // std::vector<std::vector<cv::cuda::GpuMat>> inputs;
 
     // Let's use a batch size which matches that which we set the
     // Options.optBatchSize option
-    size_t batchSize = options.optBatchSize;
+    //size_t batchSize = options.optBatchSize;
 
     // TODO:
     // For the sake of the demo, we will be feeding the same image to all the
     // inputs You should populate your inputs appropriately.
-    for (const auto &inputDim : inputDims) { // For each of the model inputs...
-        std::vector<cv::cuda::GpuMat> input;
-        for (size_t j = 0; j < batchSize; ++j) { // For each element we want to add to the batch...
-            // TODO:
-            // You can choose to resize by scaling, adding padding, or a combination
-            // of the two in order to maintain the aspect ratio You can use the
-            // Engine::resizeKeepAspectRatioPadRightBottom to resize to a square while
-            // maintain the aspect ratio (adds padding where necessary to achieve
-            // this).
-            auto resized = Engine<float>::resizeKeepAspectRatioPadRightBottom(img, inputDim.d[1], inputDim.d[2]);
-            // You could also perform a resize operation without maintaining aspect
-            // ratio with the use of padding by using the following instead:
-            //            cv::cuda::resize(img, resized, cv::Size(inputDim.d[2],
-            //            inputDim.d[1])); // TRT dims are (height, width) whereas
-            //            OpenCV is (width, height)
-            input.emplace_back(std::move(resized));
-        }
-        inputs.emplace_back(std::move(input));
-    }
+    // for (const auto &inputDim : inputDims) { // For each of the model inputs...
+    //     std::vector<cv::cuda::GpuMat> input;
+    //     for (size_t j = 0; j < batchSize; ++j) { // For each element we want to add to the batch...
+    //         // TODO:
+    //         // You can choose to resize by scaling, adding padding, or a combination
+    //         // of the two in order to maintain the aspect ratio You can use the
+    //         // Engine::resizeKeepAspectRatioPadRightBottom to resize to a square while
+    //         // maintain the aspect ratio (adds padding where necessary to achieve
+    //         // this).
+    //         auto resized = Engine<float>::resizeKeepAspectRatioPadRightBottom(img, inputDim.d[1], inputDim.d[2]);
+    //         // You could also perform a resize operation without maintaining aspect
+    //         // ratio with the use of padding by using the following instead:
+    //         //            cv::cuda::resize(img, resized, cv::Size(inputDim.d[2],
+    //         //            inputDim.d[1])); // TRT dims are (height, width) whereas
+    //         //            OpenCV is (width, height)
+    //         input.emplace_back(std::move(resized));
+    //     }
+    //     inputs.emplace_back(std::move(input));
+    // }
 
-    // Warm up the network before we begin the benchmark
-    spdlog::info("Warming up the network...");
-    std::vector<std::vector<std::vector<float>>> featureVectors;
-    for (int i = 0; i < 100; ++i) {
-        bool succ = engine.runInference(inputs, featureVectors);
-        if (!succ) {
-            const std::string msg = "Unable to run inference.";
-            spdlog::error(msg);
-            throw std::runtime_error(msg);
-        }
-    }
+    // // Warm up the network before we begin the benchmark
+    // spdlog::info("Warming up the network...");
+    // std::vector<std::vector<std::vector<float>>> featureVectors;
+    // for (int i = 0; i < 100; ++i) {
+    //     bool succ = engine.runInference(inputs, featureVectors);
+    //     if (!succ) {
+    //         const std::string msg = "Unable to run inference.";
+    //         spdlog::error(msg);
+    //         throw std::runtime_error(msg);
+    //     }
+    // }
 
     // Benchmark the inference time
-    size_t numIterations = 1000;
-    spdlog::info("Running benchmarks ({} iterations)...", numIterations);
-    preciseStopwatch stopwatch;
-    for (size_t i = 0; i < numIterations; ++i) {
-        featureVectors.clear();
-        engine.runInference(inputs, featureVectors);
-    }
-    auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
-    auto avgElapsedTimeMs = totalElapsedTimeMs / numIterations / static_cast<float>(inputs[0].size());
+    // size_t numIterations = 1000;
+    // spdlog::info("Running benchmarks ({} iterations)...", numIterations);
+    // preciseStopwatch stopwatch;
+    // for (size_t i = 0; i < numIterations; ++i) {
+    //     featureVectors.clear();
+    //     engine.runInference(inputs, featureVectors);
+    // }
+    // auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
+    // auto avgElapsedTimeMs = totalElapsedTimeMs / numIterations / static_cast<float>(inputs[0].size());
 
-    spdlog::info("Benchmarking complete!");
-    spdlog::info("======================");
-    spdlog::info("Avg time per sample: ");
-    spdlog::info("Avg time per sample: {} ms", avgElapsedTimeMs);
-    spdlog::info("Batch size: {}", inputs[0].size());
-    spdlog::info("Avg FPS: {} fps", static_cast<int>(1000 / avgElapsedTimeMs));
-    spdlog::info("======================\n");
+    // spdlog::info("Benchmarking complete!");
+    // spdlog::info("======================");
+    // spdlog::info("Avg time per sample: ");
+    // spdlog::info("Avg time per sample: {} ms", avgElapsedTimeMs);
+    // spdlog::info("Batch size: {}", inputs[0].size());
+    // spdlog::info("Avg FPS: {} fps", static_cast<int>(1000 / avgElapsedTimeMs));
+    // spdlog::info("======================\n");
 
-    // Print the feature vectors
-    for (size_t batch = 0; batch < featureVectors.size(); ++batch) {
-        for (size_t outputNum = 0; outputNum < featureVectors[batch].size(); ++outputNum) {
-            spdlog::info("Batch {}, output {}", batch, outputNum);
-            std::string output;
-            int i = 0;
-            for (const auto &e : featureVectors[batch][outputNum]) {
-                output += std::to_string(e) + " ";
-                if (++i == 10) {
-                    output += "...";
-                    break;
-                }
-            }
-            spdlog::info("{}", output);
-        }
-    }
+    // // Print the feature vectors
+    // for (size_t batch = 0; batch < featureVectors.size(); ++batch) {
+    //     for (size_t outputNum = 0; outputNum < featureVectors[batch].size(); ++outputNum) {
+    //         spdlog::info("Batch {}, output {}", batch, outputNum);
+    //         std::string output;
+    //         int i = 0;
+    //         for (const auto &e : featureVectors[batch][outputNum]) {
+    //             output += std::to_string(e) + " ";
+    //             if (++i == 10) {
+    //                 output += "...";
+    //                 break;
+    //             }
+    //         }
+    //         spdlog::info("{}", output);
+    //     }
+    // }
 
     // TODO: If your model requires post processing (ex. convert feature vector
     // into bounding boxes) then you would do so here.
