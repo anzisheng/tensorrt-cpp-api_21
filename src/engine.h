@@ -115,7 +115,7 @@ public:
     static cv::cuda::GpuMat blobFromGpuMats(const std::vector<cv::cuda::GpuMat> &batchInput, const std::array<float, 3> &subVals,
                                             const std::array<float, 3> &divVals, bool normalize, bool swapRB = false);
 
-private:
+//private:
     // Build the network
     bool build(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize);
 

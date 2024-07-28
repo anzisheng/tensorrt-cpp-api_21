@@ -5,12 +5,15 @@
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include "yolov8.h"
+#include "Face68Landmarks_trt.h"
+#include "facerecognizer_trt.h"
+#include "faceswap_trt.h"
 int main(int argc, char *argv[]) {
     CommandLineArguments arguments;
 
-    std::string logLevelStr = getLogLevelFromEnvironment();
-    spdlog::level::level_enum logLevel = toSpdlogLevel(logLevelStr);
-    spdlog::set_level(logLevel);
+    // std::string logLevelStr = getLogLevelFromEnvironment();
+    // spdlog::level::level_enum logLevel = toSpdlogLevel(logLevelStr);
+    // spdlog::set_level(logLevel);
 
     // Parse the command line arguments
     // if (!parseArguments(argc, argv, arguments)) {
@@ -70,6 +73,18 @@ int main(int argc, char *argv[]) {
     const auto outputName = inputImage0.substr(0, inputImage0.find_last_of('.')) + "_annotated.jpg";
     cv::imwrite(outputName, img0);
     std::cout << "Saved annotated image to: " << outputName << std::endl;
+
+    Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
+
+    FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
+
+     std::cout << "begin to inswapper_128.onnx: " << outputName << std::endl;
+     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
+    // std::cout << "inswapper_128.onnx  trted: " << outputName << std::endl;
+
+
+
+
 
     // if (!arguments.onnxModelPath.empty()) {
     //     // Build the onnx model into a TensorRT engine file, and load the TensorRT

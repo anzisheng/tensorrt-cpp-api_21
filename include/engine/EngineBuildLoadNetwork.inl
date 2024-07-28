@@ -10,7 +10,7 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
     const auto engineDir = std::filesystem::path(m_options.engineFileDir);
     std::filesystem::path enginePath = engineDir / engineName;
     spdlog::info("Searching for engine file with name: {}", enginePath.string());
-
+    std::cout << "enginePath: "<<enginePath <<std::endl;
     if (Util::doesFileExist(enginePath)) {
         spdlog::info("Engine found, not regenerating...");
     } else {
@@ -25,7 +25,7 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
             std::filesystem::create_directories(engineDir);
             spdlog::info("Created directory: {}", engineDir.string());
         }
-
+        std::cout << "call engine build "<<enginePath <<std::endl;
         auto ret = build(onnxModelPath, subVals, divVals, normalize);
         if (!ret) {
             return false;
@@ -43,7 +43,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     m_normalize = normalize;
 
     // Read the serialized model from disk
-    std::cout <<trtModelPath<< trtModelPath <<std::endl;
+    std::cout <<"trtModelPath: "<< trtModelPath <<std::endl;
     if (!Util::doesFileExist(trtModelPath)) {
         auto msg = "Error, unable to read TensorRT model at path: " + trtModelPath;
         spdlog::error(msg);
@@ -206,12 +206,14 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     // size is deprecated). More info here:
     // https://docs.nvidia.com/deeplearning/tensorrt/developer-guide/index.html#explicit-implicit-batch
     auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    std::cout << "call createNetworkV2 " <<std::endl;
     auto network = std::unique_ptr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
     if (!network) {
         return false;
     }
 
     // Create a parser for reading the onnx file.
+    std::cout << "Create a parser " <<std::endl;
     auto parser = std::unique_ptr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, m_logger));
     if (!parser) {
         return false;
@@ -230,15 +232,16 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
         spdlog::error(msg);
         throw std::runtime_error(msg);
     }
-
+    std::cout << "Create a parser " <<std::endl;
     // Parse the buffer we read into memory.
     auto parsed = parser->parse(buffer.data(), buffer.size());
     if (!parsed) {
         return false;
     }
 
-    // Ensure that all the inputs have the same batch size
+    // Ensure that all the inputs have the same batch size    
     const auto numInputs = network->getNbInputs();
+    std::cout << "net input number "<< numInputs <<std::endl;
     if (numInputs < 1) {
         auto msg = "Error, model needs at least 1 input!";
         spdlog::error(msg);
@@ -270,13 +273,17 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
         }
     }
 
+    std::cout << "next to createBuilderConfig "<<std::endl;
+
     auto config = std::unique_ptr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
     if (!config) {
         return false;
     }
 
+    std::cout << "next to createOptimizationProfile "<<std::endl;
     // Register a single optimization profile
     nvinfer1::IOptimizationProfile *optProfile = builder->createOptimizationProfile();
+     std::cout << "next to the loop "<<std::endl;
     for (int32_t i = 0; i < numInputs; ++i) {
         // Must specify dimensions for all the inputs the model expects.
         const auto input = network->getInput(i);
@@ -285,6 +292,8 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
         int32_t inputC = inputDims.d[1];
         int32_t inputH = inputDims.d[2];
         int32_t inputW = inputDims.d[3];
+
+        std::cout << i << "specify dimensions for all the inputs the m"<<std::endl;
 
         // Specify the optimization profile`
         if (doesSupportDynamicBatch) {
@@ -300,6 +309,7 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     }
     config->addOptimizationProfile(optProfile);
 
+    std::cout << "next to the serializeEngineOptions "<<std::endl;
     // Set the precision level
     const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
     if (m_options.precision == Precision::FP16) {
@@ -349,6 +359,7 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     cudaStream_t profileStream;
     Util::checkCudaErrorCode(cudaStreamCreate(&profileStream));
     config->setProfileStream(profileStream);
+     std::cout << "next to the buildSerializedNetwork "<<std::endl;
 
     // Build the engine
     // If this call fails, it is suggested to increase the logger verbosity to
@@ -358,6 +369,7 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     if (!plan) {
         return false;
     }
+     std::cout << "next to the  Write the engine to disk "<<std::endl;
 
     // Write the engine to disk
     const auto enginePath = std::filesystem::path(m_options.engineFileDir) / engineName;
