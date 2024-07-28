@@ -418,7 +418,9 @@ private:
             if ((copyInput && mEngine->bindingIsInput(i)) || (!copyInput && !mEngine->bindingIsInput(i)))
             {
                 if (async)
+                {
                     CHECK(cudaMemcpyAsync(dstPtr, srcPtr, byteSize, memcpyType, stream));
+                }
                 else
                     CHECK(cudaMemcpy(dstPtr, srcPtr, byteSize, memcpyType));
             }

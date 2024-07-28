@@ -41,6 +41,20 @@ bool SampleOnnxMNIST::build()
 }
 
 //!
+//! \brief Runs the TensorRT inference engine for this sample
+//!
+//! \details This function is the main execution function of the sample. It allocates the buffer,
+//!          sets inputs and executes the engine.
+//!
+bool SampleOnnxMNIST::infer()
+{
+    // Create RAII buffer manager object
+    samplesCommon::BufferManager buffers(mEngine);
+    
+    return true;
+}
+
+//!
 //! \brief Uses a ONNX parser to create the Onnx MNIST Network and marks the
 //!        output layers
 //!

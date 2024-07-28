@@ -8,6 +8,39 @@ using samplesCommon::SampleUniquePtr;
 #include "logger.h"
 #include "parserOnnxConfig.h"
 
+///////////////////////////
+#define DEFINE_TRT_ENTRYPOINTS 1
+#define DEFINE_TRT_LEGACY_PARSER_ENTRYPOINT 0
+
+#include "argsParser.h"
+#include "buffers.h"
+#include "common.h"
+#include "logger.h"
+#include "parserOnnxConfig.h"
+
+#include "NvInfer.h"
+#include <cuda_runtime_api.h>
+
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+using namespace nvinfer1;
+using samplesCommon::SampleUniquePtr;
+#include <opencv2/opencv.hpp>
+using namespace cv;
+using namespace std;
+using namespace std;
+//using namespace cv;
+const std::string gSampleName = "TensorRT.sample_onnx_mnist";
+
+
+/////////////////////////////
+
+
+
+
+
 //#include "NvInfer.h"
 //#include <cuda_runtime_api.h>
 
