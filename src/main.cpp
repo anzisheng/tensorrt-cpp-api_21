@@ -8,6 +8,10 @@
 #include "Face68Landmarks_trt.h"
 #include "facerecognizer_trt.h"
 #include "faceswap_trt.h"
+#include "SampleOnnxMNIST.h"
+
+
+
 int main(int argc, char *argv[]) {
     CommandLineArguments arguments;
 
@@ -79,10 +83,10 @@ int main(int argc, char *argv[]) {
     FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
 
      std::cout << "begin to inswapper_128.onnx: " << outputName << std::endl;
-     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
+     //SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
     // std::cout << "inswapper_128.onnx  trted: " << outputName << std::endl;
 
-
+    SampleOnnxMNIST sample;//(initializeSampleParams(args)); // 定义一个sample实例
 
 
 
