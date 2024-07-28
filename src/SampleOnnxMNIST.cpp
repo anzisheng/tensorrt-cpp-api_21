@@ -78,7 +78,61 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
 {
     const int inputH = 128;//mInputDims.d[2];
     const int inputW = 128;//mInputDims.d[3];
+
+    cv::Mat crop_img  = cv::imread("crop_img.jpg");
+    std::cout << "crop_img: "<< crop_img.rows <<std::endl;
+    vector<cv::Mat> bgrChannels(3);
+    split(crop_img, bgrChannels);
+    for (int c = 0; c < 3; c++)
+    {
+        bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*1), 0);
+    }
+        std::vector<float>  input_image;
+    const int image_area = 128 * 128;
+    input_image.resize(3 * image_area);
+    size_t single_chn_size = image_area * sizeof(float);
+    std::cout << "00000 " << endl;
+    memcpy(input_image.data(), (float *)bgrChannels[2].data, single_chn_size); ///rgb顺序
+    memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
+    memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
+    std::cout << "1111 " << endl;
+    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("target"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
+    for (int i = 0; i < 128*128*3; i++)
+    {
+        hostDataBuffer0[i] = input_image[i];
+
+    }
+
+const int Embedding_ch = 512;
+    std::vector<float> embedding;
+    embedding.resize(Embedding_ch);
+    float *pdata  = embedding.data();
+     ifstream srcFile("embedding.txt", ios::in); 
+     if(!srcFile.is_open())
+     {
+         cout << "cann't open embedding.txt"<<endl;
+     }
+    std::cout << "3333 " << endl;
+    for (int i = 0; i < Embedding_ch; i++)
+    {       
+         float x; 
+         srcFile >> x;
+         embedding[i] = x;
+        //cout <<i <<": "<< x <<std::endl;        
+    }
+    float* hostDataBuffer1 = static_cast<float*>(buffers.getHostBuffer("source"));
+    srcFile.close();
+
+    std::cout << "4444 " << endl;
+    for (int i = 0; i < Embedding_ch; i++)
+    {
+        hostDataBuffer1[i] = embedding[i];
+    }
+    std::cout << "5555 " << endl;
+
     return true;
+
+    
 }
 //!
 //! \brief Uses a ONNX parser to create the Onnx MNIST Network and marks the
