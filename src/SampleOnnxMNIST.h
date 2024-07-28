@@ -16,6 +16,16 @@ SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
 
     SampleOnnxMNIST(){}
 
+     //!
+    //! \brief Function builds the network engine
+    //!
+    bool build();
+
+    //!
+    //! \brief Runs the TensorRT inference engine for this sample
+    //!
+    bool infer();
+
 
     samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
     std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine

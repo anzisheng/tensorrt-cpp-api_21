@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     // std::cout << "inswapper_128.onnx  trted: " << outputName << std::endl;
     samplesCommon::Args args; // 接收用户传递参数的变量
 
-    SampleOnnxMNIST sample0;//(initializeSampleParams(args)); // 定义一个sample实例
+    //SampleOnnxMNIST sample0;//(initializeSampleParams(args)); // 定义一个sample实例
     SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
 
 
