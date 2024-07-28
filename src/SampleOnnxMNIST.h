@@ -7,8 +7,19 @@ using samplesCommon::SampleUniquePtr;
 class SampleOnnxMNIST
 {
 public:
+SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
+        : mParams(params)
+        , mRuntime(nullptr)
+        , mEngine(nullptr)
+    {
+    }
 
-SampleOnnxMNIST(){}
+    SampleOnnxMNIST(){}
+
+
+    samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
+    std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine
+    std::shared_ptr<nvinfer1::ICudaEngine> mEngine; //!< The TensorRT engine used to run the network
 
 
 };
