@@ -84,6 +84,11 @@ SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
         SampleUniquePtr<nvinfer1::INetworkDefinition>& network, SampleUniquePtr<nvinfer1::IBuilderConfig>& config,
         SampleUniquePtr<nvonnxparser::IParser>& parser);
 
+    //!
+    //! \brief Reads the input  and stores the result in a managed buffer
+    //!
+    bool processInput(const samplesCommon::BufferManager& buffers);
+
     Logger m_logger;
     samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
     std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine

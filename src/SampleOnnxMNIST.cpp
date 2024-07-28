@@ -50,10 +50,36 @@ bool SampleOnnxMNIST::infer()
 {
     // Create RAII buffer manager object
     samplesCommon::BufferManager buffers(mEngine);
+
+    auto context = SampleUniquePtr<nvinfer1::IExecutionContext>(mEngine->createExecutionContext());
+    if (!context)
+    {
+        return false;
+    }
+    // Read the input data into the managed buffers
+   if(mParams.inputTensorNames.size() != 2){
+    std::cout << "wrong net"<<std::endl;
+    return false;
+   };
+
+    if (!processInput(buffers))
+    {
+        return false;
+    }
     
     return true;
 }
 
+
+//!
+//! \brief Reads the input and stores the result in a managed buffer
+//!
+bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
+{
+    const int inputH = 128;//mInputDims.d[2];
+    const int inputW = 128;//mInputDims.d[3];
+    return true;
+}
 //!
 //! \brief Uses a ONNX parser to create the Onnx MNIST Network and marks the
 //!        output layers
