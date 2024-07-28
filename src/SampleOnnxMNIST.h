@@ -5,6 +5,18 @@
 #include "argsParser.h"
 #include "engine.h"
 using samplesCommon::SampleUniquePtr;
+#include "logger.h"
+#include "parserOnnxConfig.h"
+
+//#include "NvInfer.h"
+//#include <cuda_runtime_api.h>
+
+// #include <cstdlib>
+// #include <fstream>
+// #include <iostream>
+// #include <sstream>
+using namespace nvinfer1;
+// using samplesCommon::SampleUniquePtr;
 
 // Class to extend TensorRT logger
 // class Logger2 : public nvinfer1::ILogger {
@@ -31,6 +43,13 @@ SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
     //! \brief Runs the TensorRT inference engine for this sample
     //!
     bool infer();
+
+     //!
+    //! \brief Parses an ONNX model for MNIST and creates a TensorRT network
+    //!
+    bool constructNetwork(SampleUniquePtr<nvinfer1::IBuilder>& builder,
+        SampleUniquePtr<nvinfer1::INetworkDefinition>& network, SampleUniquePtr<nvinfer1::IBuilderConfig>& config,
+        SampleUniquePtr<nvonnxparser::IParser>& parser);
 
     Logger m_logger;
     samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
