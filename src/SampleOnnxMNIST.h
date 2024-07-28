@@ -1,9 +1,15 @@
 #ifndef SampleOnnxMNIST_H
 #define SampleOnnxMNIST_H
-
+#include "logger.h"
 #include "common.h"
 #include "argsParser.h"
+#include "engine.h"
 using samplesCommon::SampleUniquePtr;
+
+// Class to extend TensorRT logger
+// class Logger2 : public nvinfer1::ILogger {
+//     void log(Severity severity, const char *msg) noexcept override;
+// };
 class SampleOnnxMNIST
 {
 public:
@@ -26,7 +32,7 @@ SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
     //!
     bool infer();
 
-
+    Logger m_logger;
     samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
     std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine
     std::shared_ptr<nvinfer1::ICudaEngine> mEngine; //!< The TensorRT engine used to run the network
