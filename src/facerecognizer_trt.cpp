@@ -46,14 +46,14 @@ FaceEmbdding_trt::FaceEmbdding_trt(string onnxModelPath, const YoloV8Config &con
 }
 
 //std::vector<float> FaceEmbdding::detect(cv::Mat& srcimg,  std::vector<cv::Point2f>& face_landmark_5)
-std::vector<float> ect(cv::Mat& srcimg,        std::vector<cv::Point2f>& face_landmark_5)
+std::vector<float> FaceEmbdding_trt::detect(cv::Mat& srcimg,        std::vector<cv::Point2f>& face_landmark_5)
 {
     // first crop_img, then GPU
-    //cout << "ect"<<endl;
+    cout << "ect"<<endl;
     Mat crop_img;
     warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(112, 112));
     //imwrite("faceEmbedding_gpu.jpg", crop_img);
-    //cout << "bedding gpu"<<endl;
+    cout << "bedding gpu"<<endl;
 
     cv::cuda::GpuMat gpuImg;
     gpuImg.upload(crop_img);
@@ -64,7 +64,7 @@ std::vector<float> ect(cv::Mat& srcimg,        std::vector<cv::Point2f>& face_la
 
 std::vector<float> FaceEmbdding_trt::detect(cv::cuda::GpuMat &inputImageBGR,  std::vector<cv::Point2f>& face_landmark_5)
 {
-    
+    cout << "wwwwwwwwww"<<endl; 
     const auto input = preprocess(inputImageBGR, face_landmark_5);
     //cout << "after preprocess"<<endl;
 

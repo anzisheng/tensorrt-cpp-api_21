@@ -59,7 +59,12 @@ vector<int> nms(vector<Bbox> boxes, vector<float> confidences, const float nms_t
 Mat warp_face_by_face_landmark_5(const Mat temp_vision_frame, Mat &crop_img, const vector<Point2f> face_landmark_5, const vector<Point2f> normed_template, const Size crop_size)
 {
     //vector<uchar> inliers(face_landmark_5.size(), 0);
+    cout << "ect0000000000"<<endl;
+    cout << "face_landmark_5: "<< face_landmark_5[2]<<endl;
+    cout << "normed_template: "<< normed_template[2]<<endl;
+
     Mat affine_matrix = cv::estimateAffinePartial2D(face_landmark_5, normed_template, cv::noArray(), cv::RANSAC, 100.0);
+    cout << "ect111111111111"<<endl;
     warpAffine(temp_vision_frame, crop_img, affine_matrix, crop_size, cv::INTER_AREA, cv::BORDER_REPLICATE);
     return affine_matrix;
 }
