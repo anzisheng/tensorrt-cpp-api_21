@@ -225,7 +225,7 @@ Mat SwapFace_trt::process(Mat target_img, const vector<float> source_face_embedd
 }
 cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
-    const int outputSize = 128;
+    const int outputSize = 128*128*3;
     //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
     float* output = static_cast<float*>(buffers.getHostBuffer("output")); //"output" //mParams.outputTensorNames[0]
     std::vector<float> vdata;
@@ -263,12 +263,14 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
 	channel_mats[2] = rmat;
     Mat result;
      std::cout << "********* " << endl;
+     std::cout << "********* " << endl;
 	merge(channel_mats, result);
-    //imwrite("result.jpg", result);
+    std::cout << "********* " << endl;
+    imwrite("result.jpg", result);
 
     std::cout << "*++++++++++ " << endl;
-    box_mask.setTo(0, box_mask < 0);
-	box_mask.setTo(1, box_mask > 1);
+    //box_mask.setTo(0, box_mask < 0);
+	//box_mask.setTo(1, box_mask > 1);
     Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
     imwrite("result----.jpg", dstimg);
     return dstimg;
