@@ -60,35 +60,76 @@ int main(int argc, char *argv[]) {
     //    normalize = true;
     YoloV8Config config;
     std::string inputImage0 = "1.jpg";
-    YoloV8 yoloV8("yoloface_8n.onnx", config);
-    std::cout <<"yoloface_8n.onnx has trted"<<std::endl;
-    cv::Mat img0 = cv::imread( "1.jpg");
-    cv::Mat source_img = img0.clone();
+    std::string outputImage = "6.jpg";
+    //cv::Mat target_img = cv::imread(outputImage);
+    
+        YoloV8 yoloV8("yoloface_8n.onnx", config);
+        std::cout <<"yoloface_8n.onnx has trted"<<std::endl;
+        cv::Mat img0 = cv::imread( "1.jpg");
+        cv::Mat source_img = img0.clone();
 
-    std::vector<Object>objects = yoloV8.detectObjects(img0);
-    std::cout <<"has detected objects"<<std::endl;
+        std::vector<Object>objects = yoloV8.detectObjects(img0);
+        std::cout <<"has detected objects"<<std::endl;
 
-    // Draw the bounding boxes on the image
-    yoloV8.drawObjectLabels(img0, objects);
+        // Draw the bounding boxes on the image
+        yoloV8.drawObjectLabels(img0, objects);
 
-    std::cout << "Detected " << objects.size() << " objects" << std::endl;
+        std::cout << "Detected " << objects.size() << " objects" << std::endl;
 
-    //Save the image to disk
-    const auto outputName = inputImage0.substr(0, inputImage0.find_last_of('.')) + "_annotated.jpg";
-    cv::imwrite(outputName, img0);
-    std::cout << "Saved annotated image to: " << outputName << std::endl;
+        //Save the image to disk
+        const auto outputName = inputImage0.substr(0, inputImage0.find_last_of('.')) + "_annotated.jpg";
+        cv::imwrite(outputName, img0);
+        std::cout << "Saved annotated image to: " << outputName << std::endl;
+    
+    
+        Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
+    
+    
+        FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
+        
+    
 
-    Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
+    cv::Mat target_img = cv::imread(outputImage);
+    std::vector<Object>objects_target = yoloV8.detectObjects(target_img);
+    yoloV8.drawObjectLabels(target_img, objects_target);
+    int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
+	vector<Point2f> target_landmark_5(5);    
+    std::vector<cv::Point2f> face_landmark_5of68_trt;
+      cout << "uuuuuuuuuuuu"<<endl; 
+	detect_68landmarks_net_trt.detectlandmark(target_img, objects_target[position], target_landmark_5);
+    cout << "vvvvvvvvvvvv"<<endl; 
+    vector<float> source_face_embedding = face_embedding_net_trt.detect(source_img, face_landmark_5of68_trt);
 
-    FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
 
-     std::cout << "begin to inswapper_128.onnx: " << outputName << std::endl;
-     //SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
-    // std::cout << "inswapper_128.onnx  trted: " << outputName << std::endl;
-    samplesCommon::Args args; // 接收用户传递参数的变量
+      cout << "wwwwwwwwww"<<endl; 
 
-    //SampleOnnxMNIST sample0;//(initializeSampleParams(args)); // 定义一个sample实例
-    SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
+    std::cout << "begin to inswapper_128.onnx: " <<  std::endl;
+    SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
+    std::cout << "inswapper_128.onnx  trted: " <<  std::endl;
+    samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
+    cout << "inswapper_128 done"<<endl;
+    cv::Mat swapimg = swap_face_net_trt.process(target_img, source_face_embedding, target_landmark_5, buffers);
+    
+    cout << "swap_face_net.process end" <<endl;
+    imwrite("swapimg.jpg", swapimg);
+    // samplesCommon::Args args; // 接收用户传递参数的变量
+
+    // //SampleOnnxMNIST sample0;//(initializeSampleParams(args)); // 定义一个sample实例
+    // SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
+
+    //  if (sample.build()) // 【主要】在build方法中构建网络，返回构建网络是否成功的状态
+    // {
+    //     //return sample::gLogger.reportFail(sampleTest);
+    //     std::cout << "build() is ok"<<std::endl;
+        
+    //  }
+    //  if (!sample.infer()) // 【主要】读取图像并进行推理，返回推理是否成功的状态
+    //  {
+    //      std::cout << "infer failed"<<std::endl;
+    //      //return sample::gLogger.reportFail(sampleTest);
+    //  }
+
+
 
 
 

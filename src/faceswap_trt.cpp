@@ -2,10 +2,51 @@
 
 using namespace cv;
 using namespace std;
-
+//using namespace Ort;
 
 SwapFace_trt::SwapFace_trt(string model_path, const YoloV8Config &config)
-{    
+{
+    //m_buffers = samplesCommon::BufferManager(m_trtEngine_faceswap->m_engine);
+
+    ////OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);   ///如果使用cuda加速，需要取消注释
+/*
+    sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
+    /// std::wstring widestr = std::wstring(model_path.begin(), model_path.end());  ////windows写法
+    /// ort_session = new Session(env, widestr.c_str(), sessionOptions); ////windows写法
+    ort_session = new Session(env, model_path.c_str(), sessionOptions); ////linux写法
+    
+    size_t numInputNodes = ort_session->GetInputCount();
+    size_t numOutputNodes = ort_session->GetOutputCount();
+    AllocatorWithDefaultOptions allocator;
+    for (int i = 0; i < numInputNodes; i++)
+    {
+	char *mem;
+        //input_names.push_back(ort_session->GetInputName(i, allocator)); /// 低版本onnxruntime的接口函数
+        AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
+        mem = (char *) malloc(strlen(input_name_Ptr.get()));
+	    memcpy(mem, input_name_Ptr.get(), strlen(input_name_Ptr.get()) + 1);
+       	input_names.push_back(mem); /// 高版本onnxruntime的接口函数
+        Ort::TypeInfo input_type_info = ort_session->GetInputTypeInfo(i);
+        auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
+        auto input_dims = input_tensor_info.GetShape();
+        input_node_dims.push_back(input_dims);
+    }
+    
+    for (int i = 0; i < numOutputNodes; i++)
+    {
+	char *mem;
+        //output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
+        AllocatedStringPtr output_name_Ptr= ort_session->GetOutputNameAllocated(i, allocator);
+	mem = (char *) malloc(strlen(output_name_Ptr.get()));
+	std::memcpy(mem, output_name_Ptr.get(), strlen(output_name_Ptr.get()) + 1);
+        output_names.push_back(mem); /// 高版本onnxruntime的接口函数
+        Ort::TypeInfo output_type_info = ort_session->GetOutputTypeInfo(i);
+        auto output_tensor_info = output_type_info.GetTensorTypeAndShapeInfo();
+        auto output_dims = output_tensor_info.GetShape();
+        output_node_dims.push_back(output_dims);
+    }
+    */
+    // Specify options for GPU inference
     Options options;
     options.optBatchSize = 1;
     options.maxBatchSize = 1;
@@ -19,13 +60,10 @@ SwapFace_trt::SwapFace_trt(string model_path, const YoloV8Config &config)
 
      // Create our TensorRT inference engine
     m_trtEngine_faceswap = std::make_unique<Engine<float>>(options);
-    cout<<"create m_trtEngine_faceswap"<<endl;
-
 
 // Build the onnx model into a TensorRT engine file, cache the file to disk, and then load the TensorRT engine file into memory.
     // If the engine file already exists on disk, this function will not rebuild but only load into memory.
     // The engine file is rebuilt any time the above Options are changed.
-    cout<<"engine call buildLoadNetwork"<<endl;
     auto succ = m_trtEngine_faceswap->buildLoadNetwork(model_path, SUB_VALS, DIV_VALS, NORMALIZE);
     if (!succ) {
         const std::string errMsg = "Error: Unable to build or load the TensorRT engine. "

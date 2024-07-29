@@ -133,4 +133,4 @@ void Int8EntropyCalibrator2::writeCalibrationCache(const void *ptr, std::size_t 
     output.write(reinterpret_cast<const char *>(ptr), length);
 }
 
-Int8EntropyCalibrator2::~Int8EntropyCalibrator2() { checkCudaErrorCode(cudaFree(m_deviceInput)); };
+Int8EntropyCalibrator2::~Int8EntropyCalibrator2() { /*checkCudaErrorCode((m_deviceInput));*/ };

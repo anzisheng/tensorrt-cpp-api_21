@@ -36,8 +36,45 @@ bool SampleOnnxMNIST::build()
     {
         return false;
     }
+    // CUDA stream used for profiling by the builder.
+    auto profileStream = samplesCommon::makeCudaStream();
+    if (!profileStream)
+    {
+        return false;
+    }
+    config->setProfileStream(*profileStream);
 
-    return true;   
+    
+    SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
+    if (!plan)
+    {
+        return false;
+    }
+
+    mRuntime = std::shared_ptr<nvinfer1::IRuntime>(createInferRuntime(m_logger));
+    if (!mRuntime)
+    {
+        return false;
+    }
+    mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
+    mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
+    if (!mEngine)
+    {
+        return false;
+    }
+
+    //ASSERT(network->getNbInputs() == 2); //ansisheng ASSERT(network->getNbInputs() == 1);
+    mInputDims = network->getInput(0)->getDimensions();
+    //ASSERT(mInputDims.nbDims == 4);
+
+    //ASSERT(network->getNbOutputs() == 1);
+    mOutputDims = network->getOutput(0)->getDimensions();
+    //ASSERT(mOutputDims.nbDims == 4); //anzisheng ASSERT(mOutputDims.nbDims == 2)
+
+    return true;
+
+
+    //return true;   
 }
 
 //!
@@ -48,25 +85,49 @@ bool SampleOnnxMNIST::build()
 //!
 bool SampleOnnxMNIST::infer()
 {
+    std::cout << "mParams.inputTensorNames.size"<<std::endl;
     // Create RAII buffer manager object
     samplesCommon::BufferManager buffers(mEngine);
+    std::cout << "after mParams.inputTensorNames.size"<<std::endl;
+
 
     auto context = SampleUniquePtr<nvinfer1::IExecutionContext>(mEngine->createExecutionContext());
     if (!context)
     {
         return false;
     }
+    std::cout << "mParams.inputTensorNames.size"<<mParams.inputTensorNames.size()<<std::endl;
     // Read the input data into the managed buffers
    if(mParams.inputTensorNames.size() != 2){
     std::cout << "wrong net"<<std::endl;
-    return false;
+    //return false;
    };
 
     if (!processInput(buffers))
     {
         return false;
     }
-    
+     // Memcpy from host input buffers to device input buffers
+    std::cout << "before copyInputToDevice" <<std::endl;
+    buffers.copyInputToDevice();
+    std::cout << "after executeV2" <<std::endl;
+    std::cout << "before executeV2" <<std::endl;
+    bool status = context->executeV2(buffers.getDeviceBindings().data());
+    std::cout << "after executeV2" <<std::endl;
+    if (!status)
+    {
+        return false;
+    }
+
+     // Memcpy from device output buffers to host output buffers
+    buffers.copyOutputToHost();
+
+       // Verify results
+    if (!verifyOutput(buffers))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -133,6 +194,67 @@ const int Embedding_ch = 512;
     return true;
 
     
+}
+
+//!
+//! \brief Classifies digits and verify result
+//!
+//! \return whether the classification output matches expectations
+//!
+bool SampleOnnxMNIST::verifyOutput(const samplesCommon::BufferManager& buffers)
+{
+    cout << "mParams.outputTensorNames[0]:"<<endl;
+    const int outputSize = 128;
+    //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
+    float* output = static_cast<float*>(buffers.getHostBuffer("output")); //"output"
+    std::vector<float> vdata;
+    vdata.resize(outputSize);
+    float* pdata = vdata.data();
+    for(int i = 0; i<128*128*3; i++ )
+    {
+        vdata[i] = *(output+i);        
+        //std::cout << vdata[i]<<std::endl;
+    }
+    const int out_h = 128;//outs_shape[2];
+	const int out_w = 128;//outs_shape[3];
+	const int channel_step = out_h * out_w;
+	Mat rmat(out_h, out_w, CV_32FC1, pdata);
+	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
+	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
+    std::cout << "********* " << endl;
+    std::cout << rmat.rows <<"  "<< rmat.cols <<endl;
+	rmat *= 255.f;
+    std::cout << "&&&&& " << endl;
+    gmat *= 255.f;
+	bmat *= 255.f;
+    std::cout << "aaaaaaaa " << endl;
+    //rmat.setTo(0, rmat < 0);
+	//rmat.setTo(255, rmat > 255);
+	//gmat.setTo(0, gmat < 0);
+    std::cout << "bbbbbbbbbb " << endl;
+	//gmat.setTo(255, gmat > 255);
+	//bmat.setTo(0, bmat < 0);
+	//bmat.setTo(255, bmat > 255);
+    std::cout << "cccccccc " << endl;
+	vector<Mat> channel_mats(3);
+	channel_mats[0] = bmat;
+	channel_mats[1] = gmat;
+	channel_mats[2] = rmat;
+    Mat result;
+     std::cout << "********* " << endl;
+	merge(channel_mats, result);
+    imwrite("result.jpg", result);
+
+    std::cout << "*++++++++++ " << endl;
+    //box_mask.setTo(0, box_mask < 0);
+	//box_mask.setTo(1, box_mask > 1);
+    // Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
+    // imwrite("result.jpg", dstimg);
+
+
+
+    cout << "done" <<endl;
+    return true;
 }
 //!
 //! \brief Uses a ONNX parser to create the Onnx MNIST Network and marks the

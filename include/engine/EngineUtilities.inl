@@ -129,10 +129,12 @@ cv::cuda::GpuMat Engine<T>::blobFromGpuMats(const std::vector<cv::cuda::GpuMat> 
 }
 
 template <typename T> void Engine<T>::clearGpuBuffers() {
+    
     if (!m_buffers.empty()) {
         // Free GPU memory of outputs
         const auto numInputs = m_inputDims.size();
         for (int32_t outputBinding = numInputs; outputBinding < m_engine->getNbIOTensors(); ++outputBinding) {
+            std::cout <<"clearGpuBuffers" <<std::endl;        
             Util::checkCudaErrorCode(cudaFree(m_buffers[outputBinding]));
         }
         m_buffers.clear();

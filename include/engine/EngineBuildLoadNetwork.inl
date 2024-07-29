@@ -33,6 +33,8 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
     }
 
     return loadNetwork(enginePath, subVals, divVals, normalize);
+    
+    
 }
 
 template <typename T>
@@ -64,12 +66,13 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
         throw std::runtime_error(msg);
     }
 
+    std::cout <<"have read trtModelPath: " <<std::endl;
     // Create a runtime to deserialize the engine file.
     m_runtime = std::unique_ptr<nvinfer1::IRuntime>{nvinfer1::createInferRuntime(m_logger)};
     if (!m_runtime) {
         return false;
     }
-
+    std::cout <<"have create  createInferRuntime: " <<std::endl;
     // Set the device index
     auto ret = cudaSetDevice(m_options.deviceIndex);
     if (ret != 0) {
@@ -82,10 +85,13 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     }
 
     // Create an engine, a representation of the optimized model.
-    m_engine = std::unique_ptr<nvinfer1::ICudaEngine>(m_runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
+    //m_engine = std::unique_ptr<nvinfer1::ICudaEngine>(m_runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
+    m_engine = std::shared_ptr<nvinfer1::ICudaEngine>(m_runtime->deserializeCudaEngine(buffer.data(), buffer.size()));
     if (!m_engine) {
         return false;
     }
+    
+    std::cout <<"have create  deserializeCudaEngine: " <<std::endl;
 
     // The execution context contains all of the state associated with a
     // particular invocation
@@ -93,16 +99,23 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     if (!m_context) {
         return false;
     }
+    std::cout <<"have create  m_context: " <<std::endl;
 
     // Storage for holding the input and output buffers
     // This will be passed to TensorRT for inference
     clearGpuBuffers();
+    std::cout <<"have clearGpuBuffers: " <<std::endl;
     m_buffers.resize(m_engine->getNbIOTensors());
+    std::cout <<"111111: " <<std::endl;
 
     m_outputLengths.clear();
+    std::cout <<"22222: " <<std::endl;
     m_inputDims.clear();
+    std::cout <<"333333: " <<std::endl;
     m_outputDims.clear();
+    std::cout <<"44444: " <<std::endl;
     m_IOTensorNames.clear();
+    std::cout <<"55555: " <<std::endl;
 
     // Create a cuda stream
     cudaStream_t stream;
@@ -110,9 +123,11 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
 
     // Allocate GPU memory for input and output buffers
     m_outputLengths.clear();
+    std::cout <<"m_engine->getNbIOTensors(): "<< m_engine->getNbIOTensors() <<std::endl;
     for (int i = 0; i < m_engine->getNbIOTensors(); ++i) {
         const auto tensorName = m_engine->getIOTensorName(i);
         m_IOTensorNames.emplace_back(tensorName);
+        std::cout << i <<"th io: "<< tensorName <<std::endl;
         const auto tensorType = m_engine->getTensorIOMode(tensorName);
         const auto tensorShape = m_engine->getTensorShape(tensorName);
         const auto tensorDataType = m_engine->getTensorDataType(tensorName);
@@ -164,8 +179,10 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
                 throw std::runtime_error(msg);
             }
 
+            std::cout << " for io over" <<"th io: "<< tensorName <<std::endl;
+
             // The binding is an output
-            uint32_t outputLength = 1;
+            uint32_t outputLength = 1;//anzisheng
             m_outputDims.push_back(tensorShape);
 
             for (int j = 1; j < tensorShape.nbDims; ++j) {
@@ -173,6 +190,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
                 // into account when sizing the buffer
                 outputLength *= tensorShape.d[j];
             }
+            std::cout << " for nbDims over" <<"th io: "<< tensorName <<std::endl;
 
             m_outputLengths.push_back(outputLength);
             // Now size the output buffer appropriately, taking into account the max
@@ -185,11 +203,12 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
             throw std::runtime_error(msg);
         }
     }
+    std::cout <<"m_engine->getNbIOTensors() is over: "<< std::endl;
 
     // Synchronize and destroy the cuda stream
     Util::checkCudaErrorCode(cudaStreamSynchronize(stream));
     Util::checkCudaErrorCode(cudaStreamDestroy(stream));
-
+    std::cout <<"loadNetwork() is over: "<< std::endl;
     return true;
 }
 

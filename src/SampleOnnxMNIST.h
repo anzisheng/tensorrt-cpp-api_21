@@ -88,11 +88,23 @@ SampleOnnxMNIST(const samplesCommon::OnnxSampleParams& params)
     //! \brief Reads the input  and stores the result in a managed buffer
     //!
     bool processInput(const samplesCommon::BufferManager& buffers);
+    //!
+    //! \brief Classifies digits and verify result
+    //!
+    bool verifyOutput(const samplesCommon::BufferManager& buffers);
 
     Logger m_logger;
     samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
     std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine
     std::shared_ptr<nvinfer1::ICudaEngine> mEngine; //!< The TensorRT engine used to run the network
+    //samplesCommon::OnnxSampleParams mParams; //!< The parameters for the sample.
+
+    nvinfer1::Dims mInputDims;  //!< The dimensions of the input to the network.
+    nvinfer1::Dims mOutputDims; //!< The dimensions of the output to the network.
+    int mNumber{0};             //!< The number to classify 存储读取的手写数字图像的具体数字的gt
+
+    // std::shared_ptr<nvinfer1::IRuntime> mRuntime;   //!< The TensorRT runtime used to deserialize the engine
+    // std::shared_ptr<nvinfer1::ICudaEngine> mEngine; //!< The TensorRT engine used to run the network
 
 
 };
