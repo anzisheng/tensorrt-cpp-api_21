@@ -113,10 +113,10 @@ int main(int argc, char *argv[]) {
     //FaceEnhance enhance_face_net("gfpgan_1.4.onnx");
     FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
-    //samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
+    samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
     cout << "gfpgan_1.4.onnx trted"<<endl;
     
-    preciseStopwatch stopwatch;
+   
     //("weights/");
     //cout << "define FaceEnhance_trt"<<endl;
     //FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);   
@@ -203,12 +203,12 @@ int main(int argc, char *argv[]) {
     cout << "swap_face_net.process end" <<endl;
     imwrite("swapimg.jpg", swapimg);
 
-   
+    preciseStopwatch stopwatch;
     //Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
-    //cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
+    cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
     //cv::Mat resultimg = enhance_face_net_trt2.process(swapimg, target_landmark_5);
     //cout << "enhance_face_net_trt2.process end" <<endl;
-    //imwrite("resultimgend.jpg", resultimg);
+    imwrite("resultimgend.jpg", resultimg);
 	
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
     cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;

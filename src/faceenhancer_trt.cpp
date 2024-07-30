@@ -266,7 +266,7 @@ Mat FaceEnhance_trt::process(cv::cuda::GpuMat gpuImbBGR, const vector<Point2f> t
 
 cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
-    const int outputSize = 512*512*3;
+    //const int outputSize = 512*512*3;
     //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
     float* pdata = static_cast<float*>(buffers.getHostBuffer("output")); //"output" //mParams.outputTensorNames[0]
     //std::vector<int64_t> outs_shape = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape();

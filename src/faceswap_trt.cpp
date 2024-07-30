@@ -249,9 +249,9 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
     gmat *= 255.f;
 	bmat *= 255.f;
     std::cout << "aaaaaaaa " << endl;
-    //rmat.setTo(0, rmat < 0);
-	//rmat.setTo(255, rmat > 255);
-	//gmat.setTo(0, gmat < 0);
+    rmat.setTo(0, rmat < 0);
+	rmat.setTo(255, rmat > 255);
+	gmat.setTo(0, gmat < 0);
     std::cout << "bbbbbbbbbb " << endl;
 	//gmat.setTo(255, gmat > 255);
 	//bmat.setTo(0, bmat < 0);
@@ -269,8 +269,8 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
     imwrite("result.jpg", result);
 
     std::cout << "*++++++++++ " << endl;
-    //box_mask.setTo(0, box_mask < 0);
-	//box_mask.setTo(1, box_mask > 1);
+    box_mask.setTo(0, box_mask < 0);
+	box_mask.setTo(1, box_mask > 1);
     Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
     imwrite("result----.jpg", dstimg);
     return dstimg;
