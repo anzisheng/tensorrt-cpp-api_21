@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
     //FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);   
 
     cout << "end define FaceEnhance_trt"<<endl;
-
+    preciseStopwatch stopwatch;
      // Read the input image
     cv::Mat img = cv::imread(inputImage);
     cv::Mat source_img = img.clone();
@@ -201,15 +201,30 @@ int main(int argc, char *argv[]) {
     cv::Mat swapimg = swap_face_net_trt.process(target_img, source_face_embedding, target_landmark_5, buffers);
     
     cout << "swap_face_net.process end" <<endl;
-    imwrite("swapimg.jpg", swapimg);
+    //imwrite("swapimg.jpg", swapimg);
+    /////////////////////////////////////////////////
+    //test
+    swapimg = imread("swapimg.jpg");
 
-    preciseStopwatch stopwatch;
+    target_landmark_5[0].x = 382.286;
+    target_landmark_5[0].y = 554.35;
+    target_landmark_5[1].x = 558.448;  
+    target_landmark_5[1].y = 531.028;
+    target_landmark_5[2].x =  491.288;    
+    target_landmark_5[2].y = 636.619;
+    target_landmark_5[3].x =  443.534;       
+    target_landmark_5[3].y = 734.555;
+    target_landmark_5[4].x =  548.897;
+    target_landmark_5[4].y = 719.394;
+
+    
     //Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
     cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
     //cv::Mat resultimg = enhance_face_net_trt2.process(swapimg, target_landmark_5);
     //cout << "enhance_face_net_trt2.process end" <<endl;
     imwrite("resultimgend.jpg", resultimg);
 	
+    //preciseStopwatch stopwatch;
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
     cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
 

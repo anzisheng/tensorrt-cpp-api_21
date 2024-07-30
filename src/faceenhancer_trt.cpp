@@ -121,11 +121,44 @@ std::vector<std::vector<cv::cuda::GpuMat>> FaceEnhance_trt::preprocess(const cv:
 
 void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark_5, Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
 {
+    const int inputH = 512;//mInputDims.d[2];
+    const int inputW = 512;//mInputDims.d[3];
+
     Mat crop_img;
     affine_matrix = warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(512, 512));
     imwrite("endhance_crop_last.jpg", crop_img);
     const int crop_size[2] = {crop_img.cols, crop_img.rows};
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
+    //box_mask = imread("box_mask.jpg");
+    //cv::Mat 
+    crop_img  = cv::imread("box_mask.jpg"); 
+    std::cout << "crop_img: "<< crop_img.rows <<std::endl;
+    vector<cv::Mat> bgrChannels(3);
+    split(crop_img, bgrChannels);
+    for (int c = 0; c < 3; c++)
+    {
+        bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*1), 0);
+    }
+    std::vector<float>  input_image;
+    const int image_area = 512 * 512;
+    input_image.resize(3 * image_area);
+    size_t single_chn_size = image_area * sizeof(float);
+    std::cout << "00000 " << endl;
+    memcpy(input_image.data(), (float *)bgrChannels[2].data, single_chn_size); ///rgb顺序
+    memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
+    memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
+
+    std::cout << "1111 " << endl;
+    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
+    for (int i = 0; i < 512 * 512*3; i++)
+    {
+        hostDataBuffer0[i] = input_image[i];
+
+    }
+
+
+ /*
+
     cout << "22222222222222" <<endl;
 
      vector<cv::Mat> bgrChannels(3);
@@ -141,15 +174,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
     memcpy(this->input_image.data(), (float *)bgrChannels[2].data, single_chn_size);    ///rgb顺序
     memcpy(this->input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(this->input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
-    // const int image_area = 512 * 512;
-    // cout << "22222222222222" <<endl;
-    // this->input_image.resize(3 * image_area);
-    // cout << "3333333" <<endl;
-    // size_t single_chn_size = image_area * sizeof(float);
-    // memcpy(this->input_image.data(), (float *)bgrChannels[2].data, single_chn_size);    ///rgb顺序
-    // memcpy(this->input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
-    // memcpy(this->input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
-
+    
     const int inputH = 512;//mInputDims.d[2];
     const int inputW = 512;//mInputDims.d[3];
     cout <<"target host"<<endl;
@@ -158,6 +183,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
 
     memcpy(hostDataBuffer0, this->input_image.data(), 3*image_area * sizeof(float));
     cout << "input000000000000" <<endl;
+    */
 
 }
 /*
@@ -266,21 +292,79 @@ Mat FaceEnhance_trt::process(cv::cuda::GpuMat gpuImbBGR, const vector<Point2f> t
 
 cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
+    const int outputSize = 512;
+    cout << "mParams.outputTensorNames[0]:"<<endl;//<< mParams.outputTensorNames[0]<<endl;
+    float* output = static_cast<float*>(buffers.getHostBuffer("output")); // "output"
+    std::vector<float> vdata;
+    vdata.resize(512*512*3);
+    float* pdata = vdata.data();
+    for(int i = 0; i<512*512*3; i++ )
+    {
+        vdata[i] = *(output+i);        
+        //std::cout << vdata[i]<<std::endl;
+    }
+    const int out_h = 512;//outs_shape[2];
+	const int out_w = 512;//outs_shape[3];
+	const int channel_step = out_h * out_w;
+	Mat rmat(out_h, out_w, CV_32FC1, pdata);
+	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
+	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
+    std::cout << "********* " << endl;
+    std::cout << rmat.rows <<"  "<< rmat.cols <<endl;
+	rmat *= 255.f;
+    std::cout << "&&&&& " << endl;
+    gmat *= 255.f;
+	bmat *= 255.f;
+    std::cout << "aaaaaaaa " << endl;
+    //rmat.setTo(0, rmat < 0);
+	//rmat.setTo(255, rmat > 255);
+	//gmat.setTo(0, gmat < 0);
+    std::cout << "bbbbbbbbbb " << endl;
+	//gmat.setTo(255, gmat > 255);
+	//bmat.setTo(0, bmat < 0);
+	//bmat.setTo(255, bmat > 255);
+    std::cout << "cccccccc " << endl;
+	vector<Mat> channel_mats(3);
+	channel_mats[0] = bmat;
+	channel_mats[1] = gmat;
+	channel_mats[2] = rmat;
+    Mat result;
+     std::cout << "********* " << endl;
+	merge(channel_mats, result);
+    imwrite("result.jpg", result);
+
+    std::cout << "*++++++++++ " << endl;
+    // box_mask.setTo(0, box_mask < 0);
+	// box_mask.setTo(1, box_mask > 1);
+    // Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
+    // imwrite("result.jpg", dstimg);
+
+
+
+    cout << "done" <<endl;
+    return result;
+    /*cout << "enhance output"<<endl;
+    // cv::Mat crop_img  = cv::imread("box_mask.jpg");
+    // std::cout << "crop_img: "<< crop_img.rows <<std::endl;
     //const int outputSize = 512*512*3;
     //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
-    float* pdata = static_cast<float*>(buffers.getHostBuffer("output")); //"output" //mParams.outputTensorNames[0]
+    float* pdata = static_cast<float*>(buffers.getHostBuffer("output"));//("output")); //"output" //mParams.outputTensorNames[0]
     //std::vector<int64_t> outs_shape = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape();
 	const int out_h = 512;//outs_shape[2];
     //cout << "post result :"<< outs_shape[0] << " "<< outs_shape[1] << " "<<outs_shape[2] << " "<<outs_shape[3];
 	const int out_w = 512;//outs_shape[3];
 	const int channel_step = out_h * out_w;
+    cout << "enhance output0000"<<endl;
 	Mat rmat(out_h, out_w, CV_32FC1, pdata);
+    cout << "enhance output1111"<<endl;
     imwrite("red.jpg", rmat);
 	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
     imwrite("green.jpg", gmat);
 	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
     imwrite("blue.jpg", bmat);
+    cout << "enhance output2222"<<endl;
     rmat.setTo(-1, rmat < -1);
+    cout << "enhance output333"<<endl;
 	rmat.setTo(1, rmat > 1);
     rmat = (rmat+1)*0.5;
 	gmat.setTo(-1, gmat < -1);
@@ -289,6 +373,7 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
 	bmat.setTo(-1, bmat < -1);
 	bmat.setTo(1, bmat > 1);
     bmat = (bmat+1)*0.5;
+    cout << "enhance outpu44444"<<endl;
 
     rmat *= 255.f;
 	gmat *= 255.f;
@@ -299,23 +384,28 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
 	gmat.setTo(255, gmat > 255);
 	bmat.setTo(0, bmat < 0);
 	bmat.setTo(255, bmat > 255);
-
+ cout << "enhance outpu5555"<<endl;
 	vector<Mat> channel_mats(3);
 	channel_mats[0] = bmat;
 	channel_mats[1] = gmat;
 	channel_mats[2] = rmat;
+     cout << "enhance outpu6666"<<endl;
     Mat result;
 	merge(channel_mats, result);
+     cout << "enhance outpu7777"<<endl;
     //cout <<""<<endl;
     imwrite("merge_result.jpg", result);
 	result.convertTo(result, CV_8UC3);
     imwrite("convert_result.jpg", result);
+     cout << "enhance outpu8888"<<endl;
 
     box_mask.setTo(0, box_mask < 0);
 	box_mask.setTo(1, box_mask > 1);
     Mat paste_frame = paste_back(target_img, result, box_mask, affine_matrix);
+     cout << "enhance outpu9999"<<endl;
     Mat dstimg = blend_frame(target_img, paste_frame);
-    return dstimg;
+    cout << "enhance outpu*****"<<endl;*/
+    //return dstimg;
 }
 
 Mat FaceEnhance_trt::process(Mat target_img, const vector<Point2f> target_landmark_5, samplesCommon::BufferManager &buffers)
@@ -325,13 +415,16 @@ Mat FaceEnhance_trt::process(Mat target_img, const vector<Point2f> target_landma
     cout << "going enhance preprocess"<<endl;
 
     this->preprocess(target_img, target_landmark_5, affine_matrix, box_mask, buffers);
+    cout << "going copyInputToDevice"<<endl;
     buffers.copyInputToDevice();
+    cout << "going executeV2"<<endl;
 
     m_trtEngine_enhance->m_context->executeV2(buffers.getDeviceBindings().data());
 
      // Memcpy from device output buffers to host output buffers
+     cout << "going copyOutputToHost"<<endl;
     buffers.copyOutputToHost();
-
+    cout << "going verifyOutput"<<endl;
     return verifyOutput(target_img, buffers, affine_matrix,  box_mask);
 
 
