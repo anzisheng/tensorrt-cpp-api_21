@@ -125,9 +125,9 @@ samplesCommon::OnnxSampleParams initializeSampleParams(const samplesCommon::Args
     {
         params.dataDirs = args.dataDirs;
     }
-    params.onnxFileName = "inswapper_128.onnx";
-    params.inputTensorNames.push_back("target");
-    params.inputTensorNames.push_back("source");
+    params.onnxFileName = "gfpgan_1.4.onnx";
+    params.inputTensorNames.push_back("input");
+    //params.inputTensorNames.push_back("source");
     //cout <<"params.inputTensorNames  size: " << params.inputTensorNames.size() <<endl;
     
     params.outputTensorNames.push_back("output");

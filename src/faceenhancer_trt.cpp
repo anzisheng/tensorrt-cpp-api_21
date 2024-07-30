@@ -131,7 +131,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
     //box_mask = imread("box_mask.jpg");
     //cv::Mat 
-    crop_img  = cv::imread("box_mask.jpg"); 
+    //crop_img  = cv::imread("box_mask.jpg"); 
     std::cout << "crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
@@ -150,11 +150,12 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
 
     std::cout << "1111 " << endl;
     float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
-    for (int i = 0; i < 512 * 512*3; i++)
-    {
-        hostDataBuffer0[i] = input_image[i];
+    // for (int i = 0; i < 512 * 512*3; i++)
+    // {
+    //     hostDataBuffer0[i] = input_image[i];
 
-    }
+    // }
+    memcpy(hostDataBuffer0, input_image.data(), single_chn_size*3);
 
 
  /*

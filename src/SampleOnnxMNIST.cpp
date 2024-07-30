@@ -1,5 +1,6 @@
 
 #include "SampleOnnxMNIST.h"
+#include "utile.h"
 
 bool SampleOnnxMNIST::build()
 {
@@ -44,12 +45,51 @@ bool SampleOnnxMNIST::build()
     }
     config->setProfileStream(*profileStream);
 
-    
-    SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
-    if (!plan)
-    {
-        return false;
+     //save plan
+    // Write the engine to disk
+    const auto engineName = "gfpgan_1.4.engine.NVIDIAGeForceRTX3080.fp16.1.1";
+    // SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
+    // if (!plan)
+    // {
+    //     return false;
+    // }
+    if(!doesFileExist(engineName))
+    {   SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
+        if (!plan)
+        {
+            return false;
+        }    
+        cout << "engine name :"<< engineName << endl;
+        const auto enginePath = std::filesystem::path("./") / engineName;
+        cout << "engine path :"<< enginePath.string() << endl;
+        std::ofstream outfile(enginePath, std::ofstream::binary);
+        outfile.write(reinterpret_cast<const char *>(plan->data()), plan->size());
+        spdlog::info("Success, saved engine to {}", enginePath.string());
     }
+    else
+    {
+        cout << "loading eng file"<<endl;
+
+    }
+    const auto enginePath = std::filesystem::path("./") / engineName;
+    std::ifstream file(/*trtModelPath*/enginePath, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char> buffer(size);
+    if (!file.read(buffer.data(), size)) {
+        auto msg = "Error, unable to read engine file";
+        spdlog::error(msg);
+        throw std::runtime_error(msg);
+    }
+
+
+    
+    // SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
+    // if (!plan)
+    // {
+    //     return false;
+    // }
 
     mRuntime = std::shared_ptr<nvinfer1::IRuntime>(createInferRuntime(m_logger));
     if (!mRuntime)
@@ -57,7 +97,7 @@ bool SampleOnnxMNIST::build()
         return false;
     }
     mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
-    mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
+    mRuntime->deserializeCudaEngine(buffer.data(), buffer.size()), samplesCommon::InferDeleter());
     if (!mEngine)
     {
         return false;
@@ -137,10 +177,14 @@ bool SampleOnnxMNIST::infer()
 //!
 bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
 {
-    const int inputH = 128;//mInputDims.d[2];
-    const int inputW = 128;//mInputDims.d[3];
 
-    cv::Mat crop_img  = cv::imread("crop_img.jpg");
+    const int inputH = 512;//mInputDims.d[2];
+    const int inputW = 512;//mInputDims.d[3];
+
+   
+    //sample::gLogInfo << "Input:" << std::endl;
+
+    cv::Mat crop_img  = cv::imread("box_mask.jpg");
     std::cout << "crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
@@ -148,8 +192,8 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     {
         bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*1), 0);
     }
-        std::vector<float>  input_image;
-    const int image_area = 128 * 128;
+    std::vector<float>  input_image;
+    const int image_area = 512 * 512;
     input_image.resize(3 * image_area);
     size_t single_chn_size = image_area * sizeof(float);
     std::cout << "00000 " << endl;
@@ -157,43 +201,20 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
     std::cout << "1111 " << endl;
-    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("target"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
-    for (int i = 0; i < 128*128*3; i++)
-    {
-        hostDataBuffer0[i] = input_image[i];
+    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
+    // for (int i = 0; i < 512 * 512*3; i++)
+    // {
+    //     hostDataBuffer0[i] = input_image[i];
 
-    }
+    // }
+    memcpy(hostDataBuffer0, input_image.data(), 512 * 512*3);
 
-const int Embedding_ch = 512;
-    std::vector<float> embedding;
-    embedding.resize(Embedding_ch);
-    float *pdata  = embedding.data();
-     ifstream srcFile("embedding.txt", ios::in); 
-     if(!srcFile.is_open())
-     {
-         cout << "cann't open embedding.txt"<<endl;
-     }
-    std::cout << "3333 " << endl;
-    for (int i = 0; i < Embedding_ch; i++)
-    {       
-         float x; 
-         srcFile >> x;
-         embedding[i] = x;
-        //cout <<i <<": "<< x <<std::endl;        
-    }
-    float* hostDataBuffer1 = static_cast<float*>(buffers.getHostBuffer("source"));
-    srcFile.close();
 
-    std::cout << "4444 " << endl;
-    for (int i = 0; i < Embedding_ch; i++)
-    {
-        hostDataBuffer1[i] = embedding[i];
-    }
+   
     std::cout << "5555 " << endl;
 
-    return true;
-
-    
+    return true;    
+ 
 }
 
 //!
@@ -203,20 +224,19 @@ const int Embedding_ch = 512;
 //!
 bool SampleOnnxMNIST::verifyOutput(const samplesCommon::BufferManager& buffers)
 {
-    cout << "mParams.outputTensorNames[0]:"<<endl;
-    const int outputSize = 128;
-    //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
-    float* output = static_cast<float*>(buffers.getHostBuffer("output")); //"output"
+  const int outputSize = 512;
+    cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
+    float* output = static_cast<float*>(buffers.getHostBuffer(mParams.outputTensorNames[0])); // "output"
     std::vector<float> vdata;
-    vdata.resize(outputSize);
+    vdata.resize(512*512*3);
     float* pdata = vdata.data();
-    for(int i = 0; i<128*128*3; i++ )
+    for(int i = 0; i<512*512*3; i++ )
     {
         vdata[i] = *(output+i);        
         //std::cout << vdata[i]<<std::endl;
     }
-    const int out_h = 128;//outs_shape[2];
-	const int out_w = 128;//outs_shape[3];
+    const int out_h = 512;//outs_shape[2];
+	const int out_w = 512;//outs_shape[3];
 	const int channel_step = out_h * out_w;
 	Mat rmat(out_h, out_w, CV_32FC1, pdata);
 	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
@@ -243,11 +263,11 @@ bool SampleOnnxMNIST::verifyOutput(const samplesCommon::BufferManager& buffers)
     Mat result;
      std::cout << "********* " << endl;
 	merge(channel_mats, result);
-    imwrite("result.jpg", result);
+    imwrite("result88888.jpg", result);
 
     std::cout << "*++++++++++ " << endl;
-    //box_mask.setTo(0, box_mask < 0);
-	//box_mask.setTo(1, box_mask > 1);
+    // box_mask.setTo(0, box_mask < 0);
+	// box_mask.setTo(1, box_mask > 1);
     // Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
     // imwrite("result.jpg", dstimg);
 
@@ -255,6 +275,7 @@ bool SampleOnnxMNIST::verifyOutput(const samplesCommon::BufferManager& buffers)
 
     cout << "done" <<endl;
     return true;
+    
 }
 //!
 //! \brief Uses a ONNX parser to create the Onnx MNIST Network and marks the

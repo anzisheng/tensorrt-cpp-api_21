@@ -36,6 +36,7 @@ add_library(tensorrt_cpp_api SHARED
         src/facerecognizer_trt.cpp
         src/faceswap_trt.cpp
         src/faceenhancer_trt.cpp
+        src/SampleOnnxMNIST.cpp
         )
 
 target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} 

@@ -19,6 +19,7 @@
 //#include "faceenhancer_trt.h"
 //#include "faceenhancer_trt2.h"
 #include "faceswap_trt.h"
+#include "SampleOnnxMNIST.h"
 //#include "faceswap.h"
 #include "engine.h"
 #include "utile.h"
@@ -106,8 +107,8 @@ int main(int argc, char *argv[]) {
     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
     cout << "inswapper_128 done"<<endl;
-    //samplesCommon::Args args; // 接收用户传递参数的变量
-    //SampleOnnxMNIST_swap sample(initializeSampleParams(args)); // 定义一个sample实例
+    samplesCommon::Args args; // 接收用户传递参数的变量
+    //SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
 
 
     //FaceEnhance enhance_face_net("gfpgan_1.4.onnx");
@@ -116,10 +117,9 @@ int main(int argc, char *argv[]) {
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
     cout << "gfpgan_1.4.onnx trted"<<endl;
     
+
    
-    //("weights/");
-    //cout << "define FaceEnhance_trt"<<endl;
-    //FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);   
+     
 
     cout << "end define FaceEnhance_trt"<<endl;
     preciseStopwatch stopwatch;
@@ -216,13 +216,24 @@ int main(int argc, char *argv[]) {
     target_landmark_5[3].y = 734.555;
     target_landmark_5[4].x =  548.897;
     target_landmark_5[4].y = 719.394;
-
+///////////////////////////////
     
     //Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
     cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
     //cv::Mat resultimg = enhance_face_net_trt2.process(swapimg, target_landmark_5);
     //cout << "enhance_face_net_trt2.process end" <<endl;
     imwrite("resultimgend.jpg", resultimg);
+
+    //if (!sample.build()) // 【主要】在build方法中构建网络，返回构建网络是否成功的状态
+    {
+        cout<<"bad build"<<endl;
+        return 0;////sample::gLogger.reportFail(sampleTest);
+    }
+    //if (!sample.infer()) // 【主要】读取图像并进行推理，返回推理是否成功的状态
+    {
+         cout<<"bad build"<<endl;
+        return 0;////sample::gLogger.reportFail(sampleTest);
+    }
 	
     //preciseStopwatch stopwatch;
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
