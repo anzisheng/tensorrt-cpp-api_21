@@ -31,60 +31,10 @@ using namespace cv;
 int main(int argc, char *argv[]) {
 
     
-
-    // int count;
-	// cudaGetDeviceCount(&count);
-	// printf("cuda count %d\n", count);
 	string source_path = "1.jpg";
 	//string target_path = "./images/6.jpg";
 
-    ////图片路径和onnx文件的路径，要确保写正确，才能使程序正常运行的
-	//Yolov8Face detect_face_net("weights/yoloface_8n.onnx");
-	//Face68Landmarks detect_68landmarks_net("weights/2dfan4.onnx");
-    // auto now = std::chrono::system_clock::now();
-	// std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-	// std::cout << "当前时间: " << std::ctime(&now_c) << std::endl;
-
-	//Mat source_img = imread(source_path);
-	//Mat target_img = imread(target_path);
-
-//#if 1
-    // vector<Bbox> boxes;
-	// detect_face_net.detect(source_img, boxes);
-	// Rect rect;// = boxes[0];
-	// rect.x = boxes[0].xmin;
-	// rect.y = boxes[0].ymin;
-	// rect.width = boxes[0].xmax -boxes[0].xmin;
-	// rect.height = boxes[0].ymax -boxes[0].ymin;
-    // cout << "box is :"<<boxes[0].xmin << " "<< boxes[0].ymin<< " " << rect.width << " "<< rect.height;
-	// cv::rectangle(source_img, rect, Scalar(0,0,0));
-	//imshow("bac", source_img);
-	//cv::imwrite("123.jpg", source_img);
-
-    // auto detect_yolov = std::chrono::system_clock::now();
-    // std::time_t detect_yolov_c = std::chrono::system_clock::to_time_t(detect_yolov);
-    // std::cout << "detect yolov 当前时间: " << std::ctime(&detect_yolov_c) << std::endl;
-
-	//int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
-	//vector<Point2f> face_landmark_5of68;
-	//vector<Point2f> face68landmarks = detect_68landmarks_net.detect(source_img, boxes[position], face_landmark_5of68);
-	
-    // ofstream destFile("5landmark.txt", ios::out);
-	// for(int i = 0; i < face_landmark_5of68.size(); i++)
-	// {
-	// 	destFile << face_landmark_5of68[i].x << " "<< face_landmark_5of68[i].y<< " " ;
-	// }
-	// destFile.close();
-	// vector<float> source_face_embedding = face_embedding_net.detect(source_img, face_landmark_5of68);
-	
-	// ofstream destFile2("embedding.txt", ios::out); 
-
-	// for(int i =0; i < source_face_embedding.size(); i++)
-	// {
-	// 	destFile2 << source_face_embedding[i] << " " ;
-	// }
-	// destFile2.close();
-
+   
     //tensorrt part
     YoloV8Config config;
     std::string onnxModelPath;
@@ -99,56 +49,44 @@ int main(int argc, char *argv[]) {
     YoloV8 yoloV8("yoloface_8n.onnx", config); //
     Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
     FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
-
-
    
   
     //SwapFace swap_face_net("inswapper_128.onnx");
     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
     cout << "inswapper_128 done"<<endl;
-    samplesCommon::Args args; // 接收用户传递参数的变量
+    //samplesCommon::Args args; // 接收用户传递参数的变量
     //SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
-
-
     //FaceEnhance enhance_face_net("gfpgan_1.4.onnx");
     FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
     cout << "gfpgan_1.4.onnx trted"<<endl;
-    
-
-   
-     
-
-    cout << "end define FaceEnhance_trt"<<endl;
     preciseStopwatch stopwatch;
      // Read the input image
     cv::Mat img = cv::imread(inputImage);
     cv::Mat source_img = img.clone();
-    // if (img.empty()) {
-    //     std::cout << "Error: Unable to read image at path '" << inputImage << "'" << std::endl;
-    //     return -1;
-    // }
-
+    
 
     std::vector<Object>objects = yoloV8.detectObjects(img);
-    //Object  obj = objects[0];
-
+    
     // Draw the bounding boxes on the image
-    //yoloV8.drawObjectLabels(img, objects);
+    yoloV8.drawObjectLabels(img, objects);
 
     //std::cout << "Detected " << objects.size() << " objects" << std::endl;
 
     // Save the image to disk
-    // const auto outputName = inputImage.substr(0, inputImage.find_last_of('.')) + "_annotated.jpg";
-    // cv::imwrite(outputName, img);
-    // std::cout << "Saved annotated image to: " << outputName << std::endl;
+    const auto outputName = inputImage.substr(0, inputImage.find_last_of('.')) + "_annotated.jpg";
+    cv::imwrite(outputName, img);
+    std::cout << "Saved annotated image to: " << outputName << std::endl;
 
     std::vector<cv::Point2f> face_landmark_5of68_trt;
     //std::cout <<"begin to detect landmark"<<std::endl;
     std::vector<cv::Point2f> face68landmarks_trt = detect_68landmarks_net_trt.detectlandmark(img, objects[0], face_landmark_5of68_trt);
-    // std::cout << "face_landmark_5of68_trt size: " <<face_landmark_5of68_trt.size()<<std::endl;
+    #ifndef SHOW
+    std::cout << "face68landmarks_trt size: " <<face68landmarks_trt.size()<<std::endl;
+    std::cout << "face_landmark_5of68_trt size: " <<face_landmark_5of68_trt.size()<<std::endl;
+    #endif
     // for(int i =0; i < face_landmark_5of68_trt.size(); i++)
 	// {
 	// 	//destFile2 << source_face_embedding[i] << " " ;
@@ -204,18 +142,18 @@ int main(int argc, char *argv[]) {
     //imwrite("swapimg.jpg", swapimg);
     /////////////////////////////////////////////////
     //test
-    swapimg = imread("swapimg.jpg");
+    // swapimg = imread("swapimg.jpg");
 
-    target_landmark_5[0].x = 382.286;
-    target_landmark_5[0].y = 554.35;
-    target_landmark_5[1].x = 558.448;  
-    target_landmark_5[1].y = 531.028;
-    target_landmark_5[2].x =  491.288;    
-    target_landmark_5[2].y = 636.619;
-    target_landmark_5[3].x =  443.534;       
-    target_landmark_5[3].y = 734.555;
-    target_landmark_5[4].x =  548.897;
-    target_landmark_5[4].y = 719.394;
+    // target_landmark_5[0].x = 382.286;
+    // target_landmark_5[0].y = 554.35;
+    // target_landmark_5[1].x = 558.448;  
+    // target_landmark_5[1].y = 531.028;
+    // target_landmark_5[2].x =  491.288;    
+    // target_landmark_5[2].y = 636.619;
+    // target_landmark_5[3].x =  443.534;       
+    // target_landmark_5[3].y = 734.555;
+    // target_landmark_5[4].x =  548.897;
+    // target_landmark_5[4].y = 719.394;
 ///////////////////////////////
     
     //Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
