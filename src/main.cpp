@@ -225,15 +225,15 @@ int main(int argc, char *argv[]) {
     imwrite("resultimgend.jpg", resultimg);
 
     //if (!sample.build()) // 【主要】在build方法中构建网络，返回构建网络是否成功的状态
-    {
-        cout<<"bad build"<<endl;
-        return 0;////sample::gLogger.reportFail(sampleTest);
-    }
-    //if (!sample.infer()) // 【主要】读取图像并进行推理，返回推理是否成功的状态
-    {
-         cout<<"bad build"<<endl;
-        return 0;////sample::gLogger.reportFail(sampleTest);
-    }
+    // {
+    //     cout<<"bad build"<<endl;
+    //     return 0;////sample::gLogger.reportFail(sampleTest);
+    // }
+    // //if (!sample.infer()) // 【主要】读取图像并进行推理，返回推理是否成功的状态
+    // {
+    //      cout<<"bad build"<<endl;
+    //     return 0;////sample::gLogger.reportFail(sampleTest);
+    // }
 	
     //preciseStopwatch stopwatch;
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
