@@ -83,15 +83,23 @@ int main(int argc, char *argv[]) {
     std::vector<cv::Point2f> face_landmark_5of68_trt;
     //std::cout <<"begin to detect landmark"<<std::endl;
     std::vector<cv::Point2f> face68landmarks_trt = detect_68landmarks_net_trt.detectlandmark(img, objects[0], face_landmark_5of68_trt);
-    #ifndef SHOW
+    #ifdef SHOW
     std::cout << "face68landmarks_trt size: " <<face68landmarks_trt.size()<<std::endl;
     std::cout << "face_landmark_5of68_trt size: " <<face_landmark_5of68_trt.size()<<std::endl;
+        for(int i =0; i < face68landmarks_trt.size(); i++)
+	{
+		//destFile2 << source_face_embedding[i] << " " ;
+        cout << face68landmarks_trt[i] << " ";
+	}
+
+    
+    for(int i =0; i < face_landmark_5of68_trt.size(); i++)
+	{
+		//destFile2 << source_face_embedding[i] << " " ;
+        cout << face_landmark_5of68_trt[i] << " ";
+	}
+
     #endif
-    // for(int i =0; i < face_landmark_5of68_trt.size(); i++)
-	// {
-	// 	//destFile2 << source_face_embedding[i] << " " ;
-    //     cout << face_landmark_5of68_trt[i] << " ";
-	// }
 
     //cout << "get embedding"<<endl;
     vector<float> source_face_embedding = face_embedding_net_trt.detect(source_img, face_landmark_5of68_trt);
