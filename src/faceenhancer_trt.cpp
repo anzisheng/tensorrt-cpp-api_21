@@ -291,9 +291,9 @@ Mat FaceEnhance_trt::process(cv::cuda::GpuMat gpuImbBGR, const vector<Point2f> t
 
 cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
-    const int outputSize = 512;
+    //const int outputSize = 512;
     cout << "verifyOutput....."<< target_img.rows<<"  "<<target_img.cols <<endl;
-    imwrite("strange.jpg", target_img);
+    //imwrite("strange.jpg", target_img);
     
     float* output = static_cast<float*>(buffers.getHostBuffer("output")); // "output"
     std::vector<float> vdata;
@@ -332,22 +332,25 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
     Mat result;
     cout << "begin merge" <<endl;
 
-	merge(channel_mats, result);
-    imwrite("result.jpg", result);
+	// merge(channel_mats, result);
+    // imwrite("result.jpg", result);
 
-    cout << "after merge" <<endl;
+    // cout << "after merge" <<endl;
+    //Mat result;
+	merge(channel_mats, result);
+	result.convertTo(result, CV_8UC3);
+
+    box_mask.setTo(0, box_mask < 0);
+	box_mask.setTo(1, box_mask > 1);
+    Mat paste_frame = paste_back(target_img, result, box_mask, affine_matrix);
+    Mat dstimg = blend_frame(target_img, paste_frame);
+    cout << "done" <<endl;
+    return dstimg;
+
 
 
     
-    box_mask.setTo(0, box_mask < 0);
-	box_mask.setTo(1, box_mask > 1);
-    Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
-    imwrite("result.jpg", dstimg);
-
-
-
-    cout << "done" <<endl;
-    return result;
+    //return result;
     /*cout << "enhance output"<<endl;
     // cv::Mat crop_img  = cv::imread("box_mask.jpg");
     // std::cout << "crop_img: "<< crop_img.rows <<std::endl;
@@ -422,14 +425,14 @@ Mat FaceEnhance_trt::process(Mat target_img, const vector<Point2f> target_landma
     this->preprocess(target_img, target_landmark_5, affine_matrix, box_mask, buffers);
     //cout << "going copyInputToDevice"<<endl;
     buffers.copyInputToDevice();
-    cout << "going FaceEnhance_trt cexecuteV2"<<endl;
+    //cout << "going FaceEnhance_trt cexecuteV2"<<endl;
 
     m_trtEngine_enhance->m_context->executeV2(buffers.getDeviceBindings().data());
 
      // Memcpy from device output buffers to host output buffers
     
     buffers.copyOutputToHost();
-    cout << "going FaceEnhance_trt verifyOutput"<<endl;
+    //cout << "going FaceEnhance_trt verifyOutput"<<endl;
     return verifyOutput(target_img, buffers, affine_matrix,  box_mask);
 
 
