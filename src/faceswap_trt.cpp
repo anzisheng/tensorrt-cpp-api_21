@@ -109,10 +109,10 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
     cout << "10101010" <<endl;
     affine_matrix = warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(128, 128));
     cout << "44444444444" <<endl;
-    imwrite("swap_crop.jpg", crop_img);
+    //imwrite("swap_crop.jpg", crop_img);
     const int crop_size[2] = {crop_img.cols, crop_img.rows};
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
-    crop_img = imread("swap_face_crop_img.jpg");
+    //crop_img = imread("swap_face_crop_img.jpg");
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
     for (int c = 0; c < 3; c++)
@@ -140,20 +140,20 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
     //     hostDataBuffer0[i] = input_image[i];
 
     // }
-    //memcpy(hostDataBuffer0, this->input_image.data(), 3*image_area * sizeof(float));
+    memcpy(hostDataBuffer0, this->input_image.data(), 3*image_area * sizeof(float));
     //read target from file
-    fstream target_File("target_input.txt", ios::in); 
-    if(!target_File.is_open())
-    {
-        cout << "cann't open the wapface_output.txt"<<endl;
-    }
-    for (int i = 0; i < 128*128*3; i++)
-    {
-        float x; target_File >> x;
-        //vdata[i] = x;
-        hostDataBuffer0[i]= x;
-    }
-    target_File.close();
+    // fstream target_File("target_input.txt", ios::in); 
+    // if(!target_File.is_open())
+    // {
+    //     cout << "cann't open the wapface_output.txt"<<endl;
+    // }
+    // for (int i = 0; i < 128*128*3; i++)
+    // {
+    //     float x; target_File >> x;
+    //     //vdata[i] = x;
+    //     hostDataBuffer0[i]= x;
+    // }
+    // target_File.close();
     
 
 
@@ -182,11 +182,11 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
     {
         //cout << i << ": "<< this->input_embedding[i] << std::endl;
     }
-    ifstream srcFile("source_input.txt", ios::in);
-    if(!srcFile.is_open())
-    {
-        cout << "cann't open the input_embeddingt.txt"<<endl;
-    }
+    // ifstream srcFile("source_input.txt", ios::in);
+    // if(!srcFile.is_open())
+    // {
+    //     cout << "cann't open the input_embeddingt.txt"<<endl;
+    // }
     cout << "reading in data from input_embeddingt.txt"<<endl;
     // for(int i = 0; i < this->input_embedding.size(); i++ )
     // {
@@ -197,16 +197,16 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
     #endif
 
     float* hostDataBuffer1 = static_cast<float*>(buffers.getHostBuffer("source"));
-    //memcpy(hostDataBuffer1, this->input_embedding.data(), this->len_feature * sizeof(float));
-    ifstream source_File("source_input.txt", ios::in);
-    for(int i = 0; i < this->input_embedding.size(); i++ )
-    {
-        float x;
-        source_File >> x;
-        //this->input_embedding[i] = x;
-        hostDataBuffer1[i] = x;
-    }
-    source_File.close();
+    memcpy(hostDataBuffer1, this->input_embedding.data(), this->len_feature * sizeof(float));
+    // ifstream source_File("source_input.txt", ios::in);
+    // for(int i = 0; i < this->input_embedding.size(); i++ )
+    // {
+    //     float x;
+    //     source_File >> x;
+    //     //this->input_embedding[i] = x;
+    //     hostDataBuffer1[i] = x;
+    // }
+    // source_File.close();
 
 }
 
@@ -295,17 +295,17 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
     // }
     // target_File.close();
 
-    std::vector<float> vdata(128*128*3);
-    fstream srcFile("swapface_output_cpu.txt", ios::in);
-    if(!srcFile.is_open())
-    {
-    cout << "cann't open the swapface_output_cpu.txt"<<endl;
-    }
-    for (int i = 0; i < 128*128*3; i++)
-    {
-    float x; srcFile >> x;
-    vdata[i] = x;
-    }
+    // std::vector<float> vdata(128*128*3);
+    // fstream srcFile("swapface_output_cpu.txt", ios::in);
+    // if(!srcFile.is_open())
+    // {
+    // cout << "cann't open the swapface_output_cpu.txt"<<endl;
+    // }
+    // for (int i = 0; i < 128*128*3; i++)
+    // {
+    // float x; srcFile >> x;
+    // vdata[i] = x;
+    // }
     float* pdata =  output;//vdata.data();//output;//
 
 
