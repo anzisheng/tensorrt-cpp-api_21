@@ -129,10 +129,8 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
     imwrite("endhance_crop_last.jpg", crop_img);
     const int crop_size[2] = {crop_img.cols, crop_img.rows};
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
-    //box_mask = imread("box_mask.jpg");
-    //cv::Mat 
-    //crop_img  = cv::imread("box_mask.jpg"); 
-    std::cout << "crop_img: "<< crop_img.rows <<std::endl;
+     
+    //std::cout << "crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
     for (int c = 0; c < 3; c++)

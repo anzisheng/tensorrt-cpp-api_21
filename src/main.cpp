@@ -144,32 +144,32 @@ int main(int argc, char *argv[]) {
 
     cout << "0000swap"<<endl;
 
-    target_landmark_5[0].x = 380.127;
-    target_landmark_5[0].y = 555.112;
-    target_landmark_5[1].x = 556.609;  
-    target_landmark_5[1].y = 531.036;
-    target_landmark_5[2].x =   489.365;    
-    target_landmark_5[2].y = 636.938;
-    target_landmark_5[3].x =  443.68 ;       
-    target_landmark_5[3].y = 734.912;
-    target_landmark_5[4].x =  549.813;
-    target_landmark_5[4].y = 719.047;
+    // target_landmark_5[0].x = 380.127;
+    // target_landmark_5[0].y = 555.112;
+    // target_landmark_5[1].x = 556.609;  
+    // target_landmark_5[1].y = 531.036;
+    // target_landmark_5[2].x =   489.365;    
+    // target_landmark_5[2].y = 636.938;
+    // target_landmark_5[3].x =  443.68 ;       
+    // target_landmark_5[3].y = 734.912;
+    // target_landmark_5[4].x =  549.813;
+    // target_landmark_5[4].y = 719.047;
 
     //read in source_face_embedding
-    fstream source_face_emb("embedding.txt", ios::in); 
-    if(!source_face_emb.is_open())
-    {
-        cout << "cann't open the embedding.txt"<<endl;
-    }
-    for (int i = 0; i < 512; i++)
-    {
-        float x; source_face_emb >> x;
-        cout << i <<" "<< x <<endl;
-        //vdata[i] = x;
-        source_face_embedding[i]= x;
+    // fstream source_face_emb("embedding.txt", ios::in); 
+    // if(!source_face_emb.is_open())
+    // {
+    //     cout << "cann't open the embedding.txt"<<endl;
+    // }
+    // for (int i = 0; i < 512; i++)
+    // {
+    //     float x; source_face_emb >> x;
+    //     cout << i <<" "<< x <<endl;
+    //     //vdata[i] = x;
+    //     source_face_embedding[i]= x;
 
-    }
-    source_face_emb.close();
+    // }
+    // source_face_emb.close();
 
 
 

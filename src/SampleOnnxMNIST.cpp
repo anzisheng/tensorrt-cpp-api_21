@@ -185,7 +185,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     //sample::gLogInfo << "Input:" << std::endl;
 
     cv::Mat crop_img  = cv::imread("box_mask.jpg");
-    std::cout << "crop_img: "<< crop_img.rows <<std::endl;
+    std::cout << "mnist crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
     for (int c = 0; c < 3; c++)
