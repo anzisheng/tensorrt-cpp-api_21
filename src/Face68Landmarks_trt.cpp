@@ -145,13 +145,13 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
     vector<Point2f> face68landmarks;
     cv::transform(face_landmark_68, face68landmarks, this->inv_affine_matrix);
 
-    //std::cout << "after transform gpu";
-    //for(int i = 0; i < face68landmarks.size(); i++)
-    //{
+    std::cout << "after transform gpu";
+    for(int i = 0; i < face68landmarks.size(); i++)
+    {
         //cout << face68landmarks[i].x << "   " <<face68landmarks[i].y << std::endl;
-        //circle(srcimg_transform, face68landmarks[i], 3, Scalar(120, 255, 120), -1);
-    //}
-    //imwrite("landmark_tansform_gpu1.jpg", srcimg_transform);
+        circle(srcimg_transform, face68landmarks[i], 3, Scalar(120, 255, 120), -1);
+    }
+    imwrite("landmark_tansform_gpu1.jpg", srcimg_transform);
 
 
     ////python程序里的convert_face_landmark_68_to_5函数////

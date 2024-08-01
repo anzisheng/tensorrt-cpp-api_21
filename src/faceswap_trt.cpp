@@ -106,16 +106,18 @@ void SwapFace_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark_5,
 Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
 {
     Mat crop_img;
-    //cout << "10101010" <<endl;
+    cout << "10101010" <<endl;
     affine_matrix = warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(128, 128));
-    //imwrite("swap_crop.jpg", crop_img);
+    cout << "44444444444" <<endl;
+    imwrite("swap_crop.jpg", crop_img);
     const int crop_size[2] = {crop_img.cols, crop_img.rows};
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
-
+    crop_img = imread("swap_face_crop_img.jpg");
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
     for (int c = 0; c < 3; c++)
     {
+        //bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*this->INSWAPPER_128_MODEL_STD[c]), -this->INSWAPPER_128_MODEL_MEAN[c]/this->INSWAPPER_128_MODEL_STD[c]);
         bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*this->INSWAPPER_128_MODEL_STD[c]), -this->INSWAPPER_128_MODEL_MEAN[c]/this->INSWAPPER_128_MODEL_STD[c]);
     }
 
@@ -138,7 +140,22 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
     //     hostDataBuffer0[i] = input_image[i];
 
     // }
-    memcpy(hostDataBuffer0, this->input_image.data(), 3*image_area * sizeof(float));
+    //memcpy(hostDataBuffer0, this->input_image.data(), 3*image_area * sizeof(float));
+    //read target from file
+    fstream target_File("target_input.txt", ios::in); 
+    if(!target_File.is_open())
+    {
+        cout << "cann't open the wapface_output.txt"<<endl;
+    }
+    for (int i = 0; i < 128*128*3; i++)
+    {
+        float x; target_File >> x;
+        //vdata[i] = x;
+        hostDataBuffer0[i]= x;
+    }
+    target_File.close();
+    
+
 
 
 
@@ -159,9 +176,37 @@ Mat& affine_matrix, Mat& box_mask, samplesCommon::BufferManager &buffers)
         }
         this->input_embedding[i] = sum/linalg_norm;
     }
+    #ifdef SHOW
+    cout << "this->input_embedding show:"<<endl;
+    for(int i = 0; i < this->input_embedding.size(); i++ )
+    {
+        //cout << i << ": "<< this->input_embedding[i] << std::endl;
+    }
+    ifstream srcFile("source_input.txt", ios::in);
+    if(!srcFile.is_open())
+    {
+        cout << "cann't open the input_embeddingt.txt"<<endl;
+    }
+    cout << "reading in data from input_embeddingt.txt"<<endl;
+    // for(int i = 0; i < this->input_embedding.size(); i++ )
+    // {
+    //     float x;
+    //     srcFile >> x;
+    //     this->input_embedding[i] = x;
+    // }
+    #endif
 
     float* hostDataBuffer1 = static_cast<float*>(buffers.getHostBuffer("source"));
-    memcpy(hostDataBuffer1, this->input_embedding.data(), this->len_feature * sizeof(float));
+    //memcpy(hostDataBuffer1, this->input_embedding.data(), this->len_feature * sizeof(float));
+    ifstream source_File("source_input.txt", ios::in);
+    for(int i = 0; i < this->input_embedding.size(); i++ )
+    {
+        float x;
+        source_File >> x;
+        //this->input_embedding[i] = x;
+        hostDataBuffer1[i] = x;
+    }
+    source_File.close();
 
 }
 
@@ -225,21 +270,59 @@ Mat SwapFace_trt::process(Mat target_img, const vector<float> source_face_embedd
 }
 cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
-    const int outputSize = 128*128*3;
+    //const int outputSize = 128*128*3;
     //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
     float* output = static_cast<float*>(buffers.getHostBuffer("output")); //"output" //mParams.outputTensorNames[0]
-    std::vector<float> vdata;
-    vdata.resize(outputSize);
-    float* pdata = vdata.data();
-    for(int i = 0; i<128*128*3; i++ )
+    // ofstream destFile2("swapface_output.txt", ios::out); 
+    // cout << "embedding show:"<<endl;
+	// for(int i =0; i < 128*128*3; i++)
+	// {
+	//  	destFile2 << *(output+i) << " " ;
+    //     //cout << source_face_embedding[i] << " ";
+	// }
+	// destFile2.close();
+    // fstream target_File("swapface_output_mnist.txt", ios::in); 
+    // if(!target_File.is_open())
+    // {
+    //     cout << "cann't open the wapface_output.txt"<<endl;
+    // }
+    // for (int i = 0; i < 128*128*3; i++)
+    // {
+    //     float x; target_File >> x;
+    //     //vdata[i] = x;
+    //     //hostDataBuffer0[i]= x;
+    //     output[i]= x;
+    // }
+    // target_File.close();
+
+    std::vector<float> vdata(128*128*3);
+    fstream srcFile("swapface_output_cpu.txt", ios::in);
+    if(!srcFile.is_open())
     {
-        vdata[i] = *(output+i);        
-        //std::cout << vdata[i]<<std::endl;
+    cout << "cann't open the swapface_output_cpu.txt"<<endl;
     }
+    for (int i = 0; i < 128*128*3; i++)
+    {
+    float x; srcFile >> x;
+    vdata[i] = x;
+    }
+    float* pdata = vdata.data();
+
+
+    // std::vector<float> vdata;
+    // vdata.resize(outputSize);
+    // float* pdata = vdata.data();
+    // for(int i = 0; i<128*128*3; i++ )
+    // {
+    //     vdata[i] = *(output+i);        
+    //     //std::cout << vdata[i]<<std::endl;
+    // }
+    
+    //memcpy(pdata, output, 128*128*3*sizeof(float));
     const int out_h = 128;//outs_shape[2];
 	const int out_w = 128;//outs_shape[3];
 	const int channel_step = out_h * out_w;
-	Mat rmat(out_h, out_w, CV_32FC1, pdata);
+	/*Mat rmat(out_h, out_w, CV_32FC1, pdata);
 	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
 	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
     std::cout << "********* " << endl;
@@ -253,9 +336,9 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
 	rmat.setTo(255, rmat > 255);
 	gmat.setTo(0, gmat < 0);
     std::cout << "bbbbbbbbbb " << endl;
-	//gmat.setTo(255, gmat > 255);
-	//bmat.setTo(0, bmat < 0);
-	//bmat.setTo(255, bmat > 255);
+	gmat.setTo(255, gmat > 255);
+	bmat.setTo(0, bmat < 0);
+	bmat.setTo(255, bmat > 255);
     std::cout << "cccccccc " << endl;
 	vector<Mat> channel_mats(3);
 	channel_mats[0] = bmat;
@@ -273,7 +356,37 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
 	box_mask.setTo(1, box_mask > 1);
     Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
     imwrite("result----.jpg", dstimg);
+    return dstimg;*/
+
+    Mat rmat(out_h, out_w, CV_32FC1, pdata);
+	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
+	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
+	rmat *= 255.f;
+	gmat *= 255.f;
+	bmat *= 255.f;
+    rmat.setTo(0, rmat < 0);
+	rmat.setTo(255, rmat > 255);
+	gmat.setTo(0, gmat < 0);
+	gmat.setTo(255, gmat > 255);
+	bmat.setTo(0, bmat < 0);
+	bmat.setTo(255, bmat > 255);
+
+	vector<Mat> channel_mats(3);
+	channel_mats[0] = bmat;
+	channel_mats[1] = gmat;
+	channel_mats[2] = rmat;
+    Mat result;
+	merge(channel_mats, result);
+    //box_mask = imread("faceswap_box_mask.jpg"); //anzisheng
+    //cout << affine_matrix <<endl;
+
+    box_mask.setTo(0, box_mask < 0);
+	box_mask.setTo(1, box_mask > 1);
+    Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
+    imwrite("result99999.jpg", dstimg);
     return dstimg;
+
+
 }
 
 // void SwapFace_trt::memoryFree() {

@@ -31,7 +31,7 @@ using namespace cv;
 int main(int argc, char *argv[]) {
 
     
-	string source_path = "1.jpg";
+	//string source_path = "7.png";
 	//string target_path = "./images/6.jpg";
 
    
@@ -128,8 +128,8 @@ int main(int argc, char *argv[]) {
     //std::cout << "Detected " << objects_target.size() << " objects" << std::endl;
 
     // Save the image to disk
-    // const auto outputName_target = outputImage.substr(0, outputImage.find_last_of('.')) + "_annotated.jpg";
-    // cv::imwrite(outputName_target, target_img);
+    const auto outputName_target = outputImage.substr(0, outputImage.find_last_of('.')) + "_annotated.jpg";
+    cv::imwrite(outputName_target, target_img);
     // std::cout << "Saved annotated image to: " << outputName_target << std::endl;
     //detet_face_net.detect(target_img, boxes);    
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
@@ -143,11 +143,41 @@ int main(int argc, char *argv[]) {
 	// target_5landmark.close();
 
     cout << "0000swap"<<endl;
+
+    target_landmark_5[0].x = 380.127;
+    target_landmark_5[0].y = 555.112;
+    target_landmark_5[1].x = 556.609;  
+    target_landmark_5[1].y = 531.036;
+    target_landmark_5[2].x =   489.365;    
+    target_landmark_5[2].y = 636.938;
+    target_landmark_5[3].x =  443.68 ;       
+    target_landmark_5[3].y = 734.912;
+    target_landmark_5[4].x =  549.813;
+    target_landmark_5[4].y = 719.047;
+
+    //read in source_face_embedding
+    fstream source_face_emb("embedding.txt", ios::in); 
+    if(!source_face_emb.is_open())
+    {
+        cout << "cann't open the embedding.txt"<<endl;
+    }
+    for (int i = 0; i < 512; i++)
+    {
+        float x; source_face_emb >> x;
+        cout << i <<" "<< x <<endl;
+        //vdata[i] = x;
+        source_face_embedding[i]= x;
+
+    }
+    source_face_emb.close();
+
+
+
     //cv::Mat swapimg = swap_face_net.process(target_img, source_face_embedding, target_landmark_5);
     cv::Mat swapimg = swap_face_net_trt.process(target_img, source_face_embedding, target_landmark_5, buffers);
     
     cout << "swap_face_net.process end" <<endl;
-    //imwrite("swapimg.jpg", swapimg);
+    imwrite("swapimg.jpg", swapimg);
     /////////////////////////////////////////////////
     //test
     // swapimg = imread("swapimg.jpg");
