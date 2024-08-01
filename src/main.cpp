@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
+
     cout << "gfpgan_1.4.onnx trted"<<endl;
     preciseStopwatch stopwatch;
      // Read the input image
@@ -78,121 +79,53 @@ int main(int argc, char *argv[]) {
     //std::cout <<"begin to detect landmark"<<std::endl;
     std::vector<cv::Point2f> face68landmarks_trt = detect_68landmarks_net_trt.detectlandmark(img, objects[0], face_landmark_5of68_trt);
     #ifdef SHOW
-    std::cout << "face68landmarks_trt size: " <<face68landmarks_trt.size()<<std::endl;
-    std::cout << "face_landmark_5of68_trt size: " <<face_landmark_5of68_trt.size()<<std::endl;
-        for(int i =0; i < face68landmarks_trt.size(); i++)
+    //std::cout << "face68landmarks_trt size: " <<face68landmarks_trt.size()<<std::endl;
+    //std::cout << "face_landmark_5of68_trt size: " <<face_landmark_5of68_trt.size()<<std::endl;
+    for(int i =0; i < face68landmarks_trt.size(); i++)
 	{
 		//destFile2 << source_face_embedding[i] << " " ;
         cout << face68landmarks_trt[i] << " ";
-	}
-
-    
+	}    
     for(int i =0; i < face_landmark_5of68_trt.size(); i++)
 	{
 		//destFile2 << source_face_embedding[i] << " " ;
         cout << face_landmark_5of68_trt[i] << " ";
 	}
-
     #endif
 
-    //cout << "get embedding"<<endl;
+    
     vector<float> source_face_embedding = face_embedding_net_trt.detect(source_img, face_landmark_5of68_trt);
 
-    // ofstream destFile2("embedding_cpp.txt", ios::out); 
-    // cout << "embedding show:"<<endl;
-	// for(int i =0; i < source_face_embedding.size(); i++)
-	// {
-	// 	destFile2 << source_face_embedding[i] << " " ;
-    //     cout << source_face_embedding[i] << " ";
-	// }
-	// destFile2.close();
-
-    //cv::Mat target_img = imread(target_path);
-    //cout << "next to target"<<endl;
-
-    //target_img =
+       
     cv::Mat target_img = cv::imread(outputImage);
     cv::Mat target_img2 =target_img.clone();
 
     std::vector<Object>objects_target = yoloV8.detectObjects(target_img);
-    //Object  obj = objects[0];
+   
 
+#ifdef SHOW
     // Draw the bounding boxes on the image
     yoloV8.drawObjectLabels(target_img2, objects_target);
-
-    //std::cout << "Detected " << objects_target.size() << " objects" << std::endl;
-
+    cout << "Detected " << objects_target.size() << " objects" << std::endl;
     // Save the image to disk
     const auto outputName_target = outputImage.substr(0, outputImage.find_last_of('.')) + "_annotated.jpg";
     cv::imwrite(outputName_target, target_img2);
-    // std::cout << "Saved annotated image to: " << outputName_target << std::endl;
-    //detet_face_net.detect(target_img, boxes);    
+    std::cout << "Saved annotated image to: " << outputName_target << std::endl;
+#endif
+     
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> target_landmark_5(5);    
 	detect_68landmarks_net_trt.detectlandmark(target_img, objects_target[position], target_landmark_5);
-	// ofstream target_5landmark("target_5.txt", ios::out);
-	// for(int i = 0; i < target_landmark_5.size(); i++)
-	// {
-	// 	target_5landmark << target_landmark_5[i].x << "  "<<target_landmark_5[i].y << "  ";
-	// }
-	// target_5landmark.close();
-
-    cout << "0000swap"<<endl;
-
-    // target_landmark_5[0].x = 380.127;
-    // target_landmark_5[0].y = 555.112;
-    // target_landmark_5[1].x = 556.609;  
-    // target_landmark_5[1].y = 531.036;
-    // target_landmark_5[2].x =   489.365;    
-    // target_landmark_5[2].y = 636.938;
-    // target_landmark_5[3].x =  443.68 ;       
-    // target_landmark_5[3].y = 734.912;
-    // target_landmark_5[4].x =  549.813;
-    // target_landmark_5[4].y = 719.047;
-
-    //read in source_face_embedding
-    // fstream source_face_emb("embedding.txt", ios::in); 
-    // if(!source_face_emb.is_open())
-    // {
-    //     cout << "cann't open the embedding.txt"<<endl;
-    // }
-    // for (int i = 0; i < 512; i++)
-    // {
-    //     float x; source_face_emb >> x;
-    //     cout << i <<" "<< x <<endl;
-    //     //vdata[i] = x;
-    //     source_face_embedding[i]= x;
-
-    // }
-    // source_face_emb.close();
-
-
-
-    //cv::Mat swapimg = swap_face_net.process(target_img, source_face_embedding, target_landmark_5);
+    
     cv::Mat swapimg = swap_face_net_trt.process(target_img, source_face_embedding, target_landmark_5, buffers);
-    
-    cout << "swap_face_net.process end" <<endl;
+    imwrite("target_img.jpg", target_img);
+//#ifdef SHOW        
+    std::cout << "swap_face_net.process end" <<std::endl;
     imwrite("swapimg.jpg", swapimg);
-    /////////////////////////////////////////////////
-    //test
-    // swapimg = imread("swapimg.jpg");
-
-    // target_landmark_5[0].x = 382.286;
-    // target_landmark_5[0].y = 554.35;
-    // target_landmark_5[1].x = 558.448;  
-    // target_landmark_5[1].y = 531.028;
-    // target_landmark_5[2].x =  491.288;    
-    // target_landmark_5[2].y = 636.619;
-    // target_landmark_5[3].x =  443.534;       
-    // target_landmark_5[3].y = 734.555;
-    // target_landmark_5[4].x =  548.897;
-    // target_landmark_5[4].y = 719.394;
-///////////////////////////////
+//#endif    
     
-    //Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
     cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
-    //cv::Mat resultimg = enhance_face_net_trt2.process(swapimg, target_landmark_5);
-    //cout << "enhance_face_net_trt2.process end" <<endl;
+    
     imwrite("resultimgend.jpg", resultimg);
 
     //if (!sample.build()) // 【主要】在build方法中构建网络，返回构建网络是否成功的状态

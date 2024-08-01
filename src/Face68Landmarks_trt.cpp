@@ -121,7 +121,7 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
     //     cout << "cann't open the out.txt"<<endl;
     // }
 #ifdef SHOW
-    std::cout << "befor transform, num_points" <<num_points <<"\n";
+    std::cout << "befor transform, num_points " <<num_points <<"\n";
 #endif
     for (int i = 0; i < num_points; i++)
     {
@@ -132,7 +132,7 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
         float y = pdata[i * 3 + 1] / 64.0 * 256.0;
         face_landmark_68[i] = Point2f(x, y);
 #ifdef SHOW
-        cout <<i <<": "<< x <<"   "<<y <<std::endl;
+        //cout <<i <<": "<< x <<"   "<<y <<std::endl;
         circle(m_srcImg, face_landmark_68[i], 3 ,Scalar(0,255,0),-1);
 #endif
     }
@@ -144,7 +144,7 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
     Mat srcimg_transform = this->m_srcImg.clone();
     vector<Point2f> face68landmarks;
     cv::transform(face_landmark_68, face68landmarks, this->inv_affine_matrix);
-
+#ifdef SHOW
     std::cout << "after transform gpu";
     for(int i = 0; i < face68landmarks.size(); i++)
     {
@@ -152,7 +152,7 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
         circle(srcimg_transform, face68landmarks[i], 3, Scalar(120, 255, 120), -1);
     }
     imwrite("landmark_tansform_gpu1.jpg", srcimg_transform);
-
+#endif
 
     ////python程序里的convert_face_landmark_68_to_5函数////
     face_landmark_5of68.resize(5);
@@ -183,8 +183,8 @@ std::vector<cv::Point2f> Face68Landmarks_trt::postprocess(std::vector<float> &fe
     //cout << "the rest 5 from 68\n";
 #ifdef SHOW
     for(int i = 0; i < face_landmark_5of68.size(); i++)
-    {   std::cout<< "5 of 68"<<endl;
-        std::cout << face_landmark_5of68[i].x << "   "<<face_landmark_5of68[i].y <<endl;
+    {   
+        //std::cout << face_landmark_5of68[i].x << "   "<<face_landmark_5of68[i].y <<endl;
         circle(srcimg_transform, face_landmark_5of68[i], 5, Scalar(255, 0, 0), 4);
 
     }
@@ -214,8 +214,8 @@ vector<Point2f> Face68Landmarks_trt::detectlandmark(const cv::cuda::GpuMat &inpu
         // Check if our model does only object detection or also supports segmentation
         std::vector<Object> ret;
         const auto &numOutputs = m_trtEngine_landmark->getOutputDims().size();
-        std::cout<<"Face68Landmarks_trt numOutputs size " << numOutputs<< std::endl;
-        std::cout<<"featureVector size " << featureVectors.size()<< std::endl;
+        
+        
         //if(numOutputs == 2)
         {
             // Since we have a batch size of 1 and 2 outputs, we must convert the output from a 3D array to a 2D array.

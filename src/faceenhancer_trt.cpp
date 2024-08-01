@@ -146,7 +146,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
 
-    std::cout << "1111 " << endl;
+    //std::cout << "1111 " << endl;
     float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
     // for (int i = 0; i < 512 * 512*3; i++)
     // {
@@ -292,16 +292,19 @@ Mat FaceEnhance_trt::process(cv::cuda::GpuMat gpuImbBGR, const vector<Point2f> t
 cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
     const int outputSize = 512;
-    cout << "mParams.outputTensorNames[0]:"<<endl;//<< mParams.outputTensorNames[0]<<endl;
+    cout << "verifyOutput....."<< target_img.rows<<"  "<<target_img.cols <<endl;
+    imwrite("strange.jpg", target_img);
+    
     float* output = static_cast<float*>(buffers.getHostBuffer("output")); // "output"
     std::vector<float> vdata;
     vdata.resize(512*512*3);
     float* pdata = vdata.data();
-    for(int i = 0; i<512*512*3; i++ )
-    {
-        vdata[i] = *(output+i);        
-        //std::cout << vdata[i]<<std::endl;
-    }
+    // for(int i = 0; i<512*512*3; i++ )
+    // {
+    //     vdata[i] = *(output+i);        
+    //     std::cout << vdata[i]<<std::endl;
+    // }
+    memcpy(pdata, output, 512*512*3*sizeof(float));
     const int out_h = 512;//outs_shape[2];
 	const int out_w = 512;//outs_shape[3];
 	const int channel_step = out_h * out_w;
@@ -327,9 +330,13 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
 	channel_mats[1] = gmat;
 	channel_mats[2] = rmat;
     Mat result;
-    
+    cout << "begin merge" <<endl;
+
 	merge(channel_mats, result);
-    //imwrite("result.jpg", result);
+    imwrite("result.jpg", result);
+
+    cout << "after merge" <<endl;
+
 
     
     box_mask.setTo(0, box_mask < 0);
@@ -410,19 +417,19 @@ Mat FaceEnhance_trt::process(Mat target_img, const vector<Point2f> target_landma
 {
     Mat affine_matrix;
     Mat box_mask;
-    cout << "going enhance preprocess"<<endl;
+    //cout << "going enhance preprocess"<<endl;
 
     this->preprocess(target_img, target_landmark_5, affine_matrix, box_mask, buffers);
-    cout << "going copyInputToDevice"<<endl;
+    //cout << "going copyInputToDevice"<<endl;
     buffers.copyInputToDevice();
-    cout << "going executeV2"<<endl;
+    cout << "going FaceEnhance_trt cexecuteV2"<<endl;
 
     m_trtEngine_enhance->m_context->executeV2(buffers.getDeviceBindings().data());
 
      // Memcpy from device output buffers to host output buffers
-     cout << "going copyOutputToHost"<<endl;
+    
     buffers.copyOutputToHost();
-    cout << "going verifyOutput"<<endl;
+    cout << "going FaceEnhance_trt verifyOutput"<<endl;
     return verifyOutput(target_img, buffers, affine_matrix,  box_mask);
 
 

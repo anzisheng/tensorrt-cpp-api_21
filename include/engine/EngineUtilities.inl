@@ -134,7 +134,7 @@ template <typename T> void Engine<T>::clearGpuBuffers() {
         // Free GPU memory of outputs
         const auto numInputs = m_inputDims.size();
         for (int32_t outputBinding = numInputs; outputBinding < m_engine->getNbIOTensors(); ++outputBinding) {
-            std::cout <<"clearGpuBuffers" <<std::endl;        
+            
             Util::checkCudaErrorCode(cudaFree(m_buffers[outputBinding]));
         }
         m_buffers.clear();

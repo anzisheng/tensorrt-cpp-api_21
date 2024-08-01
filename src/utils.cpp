@@ -57,14 +57,8 @@ vector<int> nms(vector<Bbox> boxes, vector<float> confidences, const float nms_t
 }
 
 Mat warp_face_by_face_landmark_5(const Mat temp_vision_frame, Mat &crop_img, const vector<Point2f> face_landmark_5, const vector<Point2f> normed_template, const Size crop_size)
-{
-    //vector<uchar> inliers(face_landmark_5.size(), 0);
-    cout << "ect0000000000"<<endl;
-    cout << "face_landmark_5: "<< face_landmark_5[2]<<endl;
-    cout << "normed_template: "<< normed_template[2]<<endl;
-
-    Mat affine_matrix = cv::estimateAffinePartial2D(face_landmark_5, normed_template, cv::noArray(), cv::RANSAC, 100.0);
-    cout << "ect111111111111"<<endl;
+{    
+    Mat affine_matrix = cv::estimateAffinePartial2D(face_landmark_5, normed_template, cv::noArray(), cv::RANSAC, 100.0);    
     warpAffine(temp_vision_frame, crop_img, affine_matrix, crop_size, cv::INTER_AREA, cv::BORDER_REPLICATE);
     return affine_matrix;
 }
@@ -97,41 +91,41 @@ Mat create_static_box_mask(const int *crop_size, const float face_mask_blur, con
 
 Mat paste_back(Mat temp_vision_frame, Mat crop_vision_frame, Mat crop_mask, Mat affine_matrix)
 {
-    cout << "paste_back outpu0000"<<endl;
+    
     Mat inverse_matrix;
     cv::invertAffineTransform(affine_matrix, inverse_matrix);
     Mat inverse_mask;
     Size temp_size(temp_vision_frame.cols, temp_vision_frame.rows);
     warpAffine(crop_mask, inverse_mask, inverse_matrix, temp_size);
-    cout << "paste_back outpu1111"<<endl;
+    
     inverse_mask.setTo(0, inverse_mask < 0);
     inverse_mask.setTo(1, inverse_mask > 1);
     Mat inverse_vision_frame;
     warpAffine(crop_vision_frame, inverse_vision_frame, inverse_matrix, temp_size, cv::INTER_LINEAR, cv::BORDER_REPLICATE);
-    cout << "paste_back outpu21222"<<endl;
+    
     vector<Mat> inverse_vision_frame_bgrs(3);
     split(inverse_vision_frame, inverse_vision_frame_bgrs);
-    cout << "paste_back outpu21222****"<<endl;
+    
     vector<Mat> temp_vision_frame_bgrs(3);
     split(temp_vision_frame, temp_vision_frame_bgrs);
     for (int c = 0; c < 3; c++)
     {
-        cout <<c << ": &&&paste_back outpu21222****"<<endl;
+        
         inverse_vision_frame_bgrs[c].convertTo(inverse_vision_frame_bgrs[c], CV_32FC1);   ////注意数据类型转换，不然在下面的矩阵点乘运算时会报错的
         temp_vision_frame_bgrs[c].convertTo(temp_vision_frame_bgrs[c], CV_32FC1);         ////注意数据类型转换，不然在下面的矩阵点乘运算时会报错的
     }
     vector<Mat> channel_mats(3);
-    cout <<1000 << ": &&&paste_back outpu21222****"<<endl;
+    
     channel_mats[0] = inverse_mask.mul(inverse_vision_frame_bgrs[0]) + temp_vision_frame_bgrs[0].mul(1 - inverse_mask);
-    cout << "paste_back outpu3333"<<endl;
+    
     channel_mats[1] = inverse_mask.mul(inverse_vision_frame_bgrs[1]) + temp_vision_frame_bgrs[1].mul(1 - inverse_mask);
     channel_mats[2] = inverse_mask.mul(inverse_vision_frame_bgrs[2]) + temp_vision_frame_bgrs[2].mul(1 - inverse_mask);
     
     cv::Mat paste_vision_frame;
     merge(channel_mats, paste_vision_frame);
-    cout << "paste_back outpu4444"<<endl;
+    
     paste_vision_frame.convertTo(paste_vision_frame, CV_8UC3);
-    cout << "paste_back outpu66666"<<endl;
+    
     return paste_vision_frame;
 }
 
