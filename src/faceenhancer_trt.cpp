@@ -308,35 +308,34 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
 	Mat rmat(out_h, out_w, CV_32FC1, pdata);
 	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
 	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
-    std::cout << "********* " << endl;
-    std::cout << rmat.rows <<"  "<< rmat.cols <<endl;
-	rmat *= 255.f;
-    std::cout << "&&&&& " << endl;
+    
+    
+	rmat *= 255.f;    
     gmat *= 255.f;
 	bmat *= 255.f;
-    std::cout << "aaaaaaaa " << endl;
-    //rmat.setTo(0, rmat < 0);
-	//rmat.setTo(255, rmat > 255);
-	//gmat.setTo(0, gmat < 0);
-    std::cout << "bbbbbbbbbb " << endl;
-	//gmat.setTo(255, gmat > 255);
-	//bmat.setTo(0, bmat < 0);
-	//bmat.setTo(255, bmat > 255);
-    std::cout << "cccccccc " << endl;
+    
+    rmat.setTo(0, rmat < 0);
+	rmat.setTo(255, rmat > 255);
+	gmat.setTo(0, gmat < 0);
+    
+	gmat.setTo(255, gmat > 255);
+	bmat.setTo(0, bmat < 0);
+	bmat.setTo(255, bmat > 255);
+    
 	vector<Mat> channel_mats(3);
 	channel_mats[0] = bmat;
 	channel_mats[1] = gmat;
 	channel_mats[2] = rmat;
     Mat result;
-     std::cout << "********* " << endl;
+    
 	merge(channel_mats, result);
-    imwrite("result.jpg", result);
+    //imwrite("result.jpg", result);
 
-    std::cout << "*++++++++++ " << endl;
-    // box_mask.setTo(0, box_mask < 0);
-	// box_mask.setTo(1, box_mask > 1);
-    // Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
-    // imwrite("result.jpg", dstimg);
+    
+    box_mask.setTo(0, box_mask < 0);
+	box_mask.setTo(1, box_mask > 1);
+    Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
+    imwrite("result.jpg", dstimg);
 
 
 

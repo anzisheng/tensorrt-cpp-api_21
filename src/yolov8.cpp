@@ -446,13 +446,13 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         int y = object.rect.y + 1;
         //std::cout <<"box by trt is "<<x<< "  "<<y<<"  " << labelSize.width<<"  " << labelSize.height + baseLine << std::endl;
         
-        
+#ifdef SHOW
         cv::rectangle(image, rect, color * 255, scale + 1);
 
         cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), txt_bk_color, -1);
 
         cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, txtColor, scale);
-
+#endif
         // Pose estimation
         if (!object.kps.empty()) {
             auto &kps = object.kps;

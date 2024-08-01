@@ -29,22 +29,15 @@ using namespace std;
 using namespace cv;
 
 int main(int argc, char *argv[]) {
-
-    
-	//string source_path = "7.png";
-	//string target_path = "./images/6.jpg";
-
    
+	   
     //tensorrt part
     YoloV8Config config;
     std::string onnxModelPath;
     std::string onnxModelPathLandmark;
     std::string inputImage = "1.jpg";
     std::string outputImage = "6.jpg";
-
-
-    // Create the YoloV8 engine
-    //YoloV8 yoloV8("yolov8n-face.onnx", config); //
+    
     
     YoloV8 yoloV8("yoloface_8n.onnx", config); //
     Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
@@ -54,7 +47,7 @@ int main(int argc, char *argv[]) {
     //SwapFace swap_face_net("inswapper_128.onnx");
     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
-    cout << "inswapper_128 done"<<endl;
+    
     //samplesCommon::Args args; // 接收用户传递参数的变量
     //SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
     //FaceEnhance enhance_face_net("gfpgan_1.4.onnx");
@@ -71,15 +64,16 @@ int main(int argc, char *argv[]) {
     std::vector<Object>objects = yoloV8.detectObjects(img);
     
     // Draw the bounding boxes on the image
-    yoloV8.drawObjectLabels(img, objects);
-
-    //std::cout << "Detected " << objects.size() << " objects" << std::endl;
-
+#ifdef SHOW
+    yoloV8.drawObjectLabels(source_img, objects);
     // Save the image to disk
     const auto outputName = inputImage.substr(0, inputImage.find_last_of('.')) + "_annotated.jpg";
-    cv::imwrite(outputName, img);
+    cv::imwrite(outputName, source_img);
     std::cout << "Saved annotated image to: " << outputName << std::endl;
+#endif
+    
 
+    
     std::vector<cv::Point2f> face_landmark_5of68_trt;
     //std::cout <<"begin to detect landmark"<<std::endl;
     std::vector<cv::Point2f> face68landmarks_trt = detect_68landmarks_net_trt.detectlandmark(img, objects[0], face_landmark_5of68_trt);
@@ -118,18 +112,19 @@ int main(int argc, char *argv[]) {
 
     //target_img =
     cv::Mat target_img = cv::imread(outputImage);
+    cv::Mat target_img2 =target_img.clone();
 
     std::vector<Object>objects_target = yoloV8.detectObjects(target_img);
     //Object  obj = objects[0];
 
     // Draw the bounding boxes on the image
-    yoloV8.drawObjectLabels(target_img, objects_target);
+    yoloV8.drawObjectLabels(target_img2, objects_target);
 
     //std::cout << "Detected " << objects_target.size() << " objects" << std::endl;
 
     // Save the image to disk
     const auto outputName_target = outputImage.substr(0, outputImage.find_last_of('.')) + "_annotated.jpg";
-    cv::imwrite(outputName_target, target_img);
+    cv::imwrite(outputName_target, target_img2);
     // std::cout << "Saved annotated image to: " << outputName_target << std::endl;
     //detet_face_net.detect(target_img, boxes);    
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
