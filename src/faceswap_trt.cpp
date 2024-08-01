@@ -306,7 +306,7 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
     float x; srcFile >> x;
     vdata[i] = x;
     }
-    float* pdata = vdata.data();
+    float* pdata =  output;//vdata.data();//output;//
 
 
     // std::vector<float> vdata;
