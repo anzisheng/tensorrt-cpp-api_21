@@ -38,29 +38,6 @@
 
 #include "NvInfer.h"
 #include <cuda_runtime_api.h>
-#include <filesystem>
-#include <spdlog/spdlog.h>
-
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-using namespace nvinfer1;
-using samplesCommon::SampleUniquePtr;
-#include <opencv2/opencv.hpp>
-using namespace cv;
-using namespace std;
-using namespace std;
-#include "argsParser.h"
-#include "buffers.h"
-#include "common.h"
-#include "logger.h"
-#include "parserOnnxConfig.h"
-#include <filesystem>
-#include <spdlog/spdlog.h>
-
-#include "NvInfer.h"
-#include <cuda_runtime_api.h>
 
 #include <cstdlib>
 #include <fstream>
@@ -74,6 +51,7 @@ using namespace std;
 using namespace std;
 //using namespace cv;
 const std::string gSampleName = "TensorRT.sample_onnx_mnist";
+
 // Utility method for checking if a file exists on disk
 inline bool doesFileExist(const std::string &name) {
     std::ifstream f(name.c_str());
@@ -142,6 +120,8 @@ private:
 //!
 bool SampleOnnxMNIST::build()
 {
+    std::string engineFileDir = ".";
+
     auto builder = SampleUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(sample::gLogger.getTRTLogger()));
     if (!builder)
     {
@@ -182,9 +162,10 @@ bool SampleOnnxMNIST::build()
     }
     config->setProfileStream(*profileStream);
 
+    
     //save plan
     // Write the engine to disk
-    const auto engineName = "inswapper_128.engine.NVIDIAGeForceRTX3080.fp16.1.1";//"gfpgan_1.4.engine.NVIDIAGeForceRTX3080.fp16.1.1";
+    const auto engineName = "gfpgan_1.4.engine.NVIDIAGeForceRTX3080.fp16.1.1";
     // SampleUniquePtr<IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
     // if (!plan)
     // {
@@ -197,18 +178,18 @@ bool SampleOnnxMNIST::build()
             return false;
         }    
         cout << "engine name :"<< engineName << endl;
-        const auto enginePath = "./inswapper_128.engine.NVIDIAGeForceRTX3080.fp16.1.1";//std::filesystem::path("./") / engineName;
-        cout << "engine path :"<< enginePath/*.string()*/ << endl;
+        const auto enginePath = std::filesystem::path("./") / engineName;
+        cout << "engine path :"<< enginePath.string() << endl;
         std::ofstream outfile(enginePath, std::ofstream::binary);
         outfile.write(reinterpret_cast<const char *>(plan->data()), plan->size());
-        spdlog::info("Success, saved engine to {}", enginePath/*.string()*/);
+        spdlog::info("Success, saved engine to {}", enginePath.string());
     }
     else
     {
         cout << "loading eng file"<<endl;
 
     }
-    const auto enginePath = "./inswapper_128.engine.NVIDIAGeForceRTX3080.fp16.1.1";//std::filesystem::path("./") / engineName;//std::filesystem::path("./") / engineName;
+    const auto enginePath = std::filesystem::path("./") / engineName;
     std::ifstream file(/*trtModelPath*/enginePath, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -227,13 +208,14 @@ bool SampleOnnxMNIST::build()
     }
 
     mEngine = std::shared_ptr<nvinfer1::ICudaEngine>(
+        //mRuntime->deserializeCudaEngine(plan->data(), plan->size()), samplesCommon::InferDeleter());
         mRuntime->deserializeCudaEngine(buffer.data(), buffer.size()), samplesCommon::InferDeleter());
     if (!mEngine)
     {
         return false;
     }
 
-    ASSERT(network->getNbInputs() == 2); //ansisheng ASSERT(network->getNbInputs() == 1);
+    ASSERT(network->getNbInputs() == 1); //ansisheng ASSERT(network->getNbInputs() == 1);
     mInputDims = network->getInput(0)->getDimensions();
     ASSERT(mInputDims.nbDims == 4);
 
@@ -296,7 +278,7 @@ bool SampleOnnxMNIST::infer()
     }
 
     // Read the input data into the managed buffers
-    ASSERT(mParams.inputTensorNames.size() == 2);
+    ASSERT(mParams.inputTensorNames.size() == 1);
     if (!processInput(buffers))
     {
         return false;
@@ -315,10 +297,10 @@ bool SampleOnnxMNIST::infer()
     buffers.copyOutputToHost();
 
     // Verify results
-    // if (!verifyOutput(buffers))
-    // {
-    //     return false;
-    // }
+    if (!verifyOutput(buffers))
+    {
+        return false;
+    }
 
     return true;
 }
@@ -328,8 +310,8 @@ bool SampleOnnxMNIST::infer()
 //!
 bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
 {
-    const int inputH = 128;//mInputDims.d[2];
-    const int inputW = 128;//mInputDims.d[3];
+    const int inputH = 512;//mInputDims.d[2];
+    const int inputW = 512;//mInputDims.d[3];
 
     // // Read a random digit file
     // srand(unsigned(time(nullptr)));
@@ -341,7 +323,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     // Print an ascii representation
     sample::gLogInfo << "Input:" << std::endl;
 
-    cv::Mat crop_img  = cv::imread("crop_img.jpg");
+    cv::Mat crop_img  = cv::imread("box_mask.jpg");
     std::cout << "crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
@@ -350,7 +332,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
         bgrChannels[c].convertTo(bgrChannels[c], CV_32FC1, 1 / (255.0*1), 0);
     }
     std::vector<float>  input_image;
-    const int image_area = 128 * 128;
+    const int image_area = 512 * 512;
     input_image.resize(3 * image_area);
     size_t single_chn_size = image_area * sizeof(float);
     std::cout << "00000 " << endl;
@@ -358,8 +340,8 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
     std::cout << "1111 " << endl;
-    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("target"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
-    for (int i = 0; i < 128*128*3; i++)
+    float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
+    for (int i = 0; i < 512 * 512*3; i++)
     {
         hostDataBuffer0[i] = input_image[i];
 
@@ -380,6 +362,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     // {
     //     //hostDataBuffer[i] = 1.0 - float(fileData[i] / 255.0);
     // }
+    /*
     const int Embedding_ch = 512;
     std::vector<float> embedding;
     embedding.resize(Embedding_ch);
@@ -404,7 +387,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     for (int i = 0; i < Embedding_ch; i++)
     {
         hostDataBuffer1[i] = embedding[i];
-    }
+    }*/
     std::cout << "5555 " << endl;
 
     return true;
@@ -417,52 +400,52 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
 //!
 bool SampleOnnxMNIST::verifyOutput(const samplesCommon::BufferManager& buffers)
 {
-    const int outputSize = 128*128*3;
-    //cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
-    float* output = static_cast<float*>(buffers.getHostBuffer(mParams.outputTensorNames[0])); //"output"
+    const int outputSize = 512;
+    cout << "mParams.outputTensorNames[0]:"<< mParams.outputTensorNames[0]<<endl;
+    float* output = static_cast<float*>(buffers.getHostBuffer(mParams.outputTensorNames[0])); // "output"
     std::vector<float> vdata;
-    vdata.resize(outputSize);
+    vdata.resize(512*512*3);
     float* pdata = vdata.data();
-    for(int i = 0; i<128*128*3; i++ )
+    for(int i = 0; i<512*512*3; i++ )
     {
         vdata[i] = *(output+i);        
-        std::cout << vdata[i]<<std::endl;
+        //std::cout << vdata[i]<<std::endl;
     }
-    const int out_h = 128;//outs_shape[2];
-	const int out_w = 128;//outs_shape[3];
+    const int out_h = 512;//outs_shape[2];
+	const int out_w = 512;//outs_shape[3];
 	const int channel_step = out_h * out_w;
 	Mat rmat(out_h, out_w, CV_32FC1, pdata);
 	Mat gmat(out_h, out_w, CV_32FC1, pdata + channel_step);
 	Mat bmat(out_h, out_w, CV_32FC1, pdata + 2 * channel_step);
-    // std::cout << "********* " << endl;
-    // std::cout << rmat.rows <<"  "<< rmat.cols <<endl;
+    std::cout << "********* " << endl;
+    std::cout << rmat.rows <<"  "<< rmat.cols <<endl;
 	rmat *= 255.f;
     std::cout << "&&&&& " << endl;
     gmat *= 255.f;
 	bmat *= 255.f;
-    //std::cout << "aaaaaaaa " << endl;
+    std::cout << "aaaaaaaa " << endl;
     //rmat.setTo(0, rmat < 0);
 	//rmat.setTo(255, rmat > 255);
 	//gmat.setTo(0, gmat < 0);
-    //std::cout << "bbbbbbbbbb " << endl;
+    std::cout << "bbbbbbbbbb " << endl;
 	//gmat.setTo(255, gmat > 255);
 	//bmat.setTo(0, bmat < 0);
 	//bmat.setTo(255, bmat > 255);
-    //std::cout << "cccccccc " << endl;
+    std::cout << "cccccccc " << endl;
 	vector<Mat> channel_mats(3);
 	channel_mats[0] = bmat;
 	channel_mats[1] = gmat;
 	channel_mats[2] = rmat;
     Mat result;
-     //std::cout << "********* " << endl;
+     std::cout << "********* " << endl;
 	merge(channel_mats, result);
     imwrite("result.jpg", result);
 
-    //std::cout << "*++++++++++ " << endl;
+    std::cout << "*++++++++++ " << endl;
     // box_mask.setTo(0, box_mask < 0);
 	// box_mask.setTo(1, box_mask > 1);
     // Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
-    //  imwrite("result.jpg", dstimg);
+    // imwrite("result.jpg", dstimg);
 
 
 
@@ -486,10 +469,10 @@ samplesCommon::OnnxSampleParams initializeSampleParams(const samplesCommon::Args
     {
         params.dataDirs = args.dataDirs;
     }
-    params.onnxFileName = "inswapper_128.onnx";
-    params.inputTensorNames.push_back("target");
-    params.inputTensorNames.push_back("source");
-    cout <<"params.inputTensorNames  size: " << params.inputTensorNames.size() <<endl;
+    params.onnxFileName = "gfpgan_1.4.onnx";
+    params.inputTensorNames.push_back("input");
+    //params.inputTensorNames.push_back("source");
+    //cout <<"params.inputTensorNames  size: " << params.inputTensorNames.size() <<endl;
     
     params.outputTensorNames.push_back("output");
     cout <<"params.outputTensorNames  size: " << params.outputTensorNames.size() <<endl;
@@ -523,9 +506,7 @@ void printHelpInfo()
 int main(int argc, char** argv)
 {
     samplesCommon::Args args; // 接收用户传递参数的变量
-    bool argsOK = samplesCommon::parseArgs(args, argc, argv); // 将main函数的参数argc和argv解释成args，返回转换是否成功的bool值
-    cout << " hello MNIst" << endl;
-    cout << " hello MNIst: " << argsOK << endl;
+    bool argsOK = samplesCommon::parseArgs(args, argc, argv); // 将main函数的参数argc和argv解释成args，返回转换是否成功的bool值    
 
     if (!argsOK) // 如果转换不成功，则用日志类报错并打印帮助信息，退出程序。
     {
