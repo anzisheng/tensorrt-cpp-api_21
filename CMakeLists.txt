@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(tensorrt_cpp_api)
 
-add_definitions(-DSHOW)
+#add_definitions(-DSHOW)
 set(CMAKE_BUILD_TYPE Release)
 # TODO: Specify the path to TensorRT root dir
 set(TensorRT_DIR /usr/local/TensorRT-8.6.1.6/)
