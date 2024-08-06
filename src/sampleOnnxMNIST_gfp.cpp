@@ -335,7 +335,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     const int image_area = 512 * 512;
     input_image.resize(3 * image_area);
     size_t single_chn_size = image_area * sizeof(float);
-    std::cout << "00000 " << endl;
+    //std::cout << "00000 " << endl;
     memcpy(input_image.data(), (float *)bgrChannels[2].data, single_chn_size); ///rgb顺序
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);

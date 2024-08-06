@@ -11,7 +11,7 @@ public:
     //Face68Landmarks(std::string modelpath);
 public:    
     // Builds the onnx model into a TensorRT engine, and loads the engine into memory
-    Face68Landmarks_trt(const std::string &onnxModelPath, const YoloV8Config &config);
+    Face68Landmarks_trt(const std::string &onnxModelPath, const YoloV8Config &config, int method = 0);
     
     vector<Point2f> detectlandmark(const cv::cuda::GpuMat &inputImageBGR, Object& object,vector<Point2f> &face_landmark_5of68);    
     vector<Point2f> detectlandmark(const cv::Mat &inputImageBGR,Object& object, vector<Point2f> &face_landmark_5of68) ;

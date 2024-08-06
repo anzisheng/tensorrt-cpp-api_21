@@ -4,7 +4,7 @@ using namespace cv;
 using namespace std;
 //using namespace Ort;
 
-SwapFace_trt::SwapFace_trt(string model_path, const YoloV8Config &config)
+SwapFace_trt::SwapFace_trt(string model_path, const YoloV8Config &config, int method)
 {
     //m_buffers = samplesCommon::BufferManager(m_trtEngine_faceswap->m_engine);
 
@@ -64,7 +64,7 @@ SwapFace_trt::SwapFace_trt(string model_path, const YoloV8Config &config)
 // Build the onnx model into a TensorRT engine file, cache the file to disk, and then load the TensorRT engine file into memory.
     // If the engine file already exists on disk, this function will not rebuild but only load into memory.
     // The engine file is rebuilt any time the above Options are changed.
-    auto succ = m_trtEngine_faceswap->buildLoadNetwork(model_path, SUB_VALS, DIV_VALS, NORMALIZE);
+    auto succ = m_trtEngine_faceswap->buildLoadNetwork(model_path, SUB_VALS, DIV_VALS, NORMALIZE,1);
     if (!succ) {
         const std::string errMsg = "Error: Unable to build or load the TensorRT engine. "
                                    "Try increasing TensorRT log severity to kVERBOSE (in /libs/tensorrt-cpp-api/engine.cpp).";
@@ -214,7 +214,7 @@ Mat SwapFace_trt::process(Mat target_img, const vector<float> source_face_embedd
 {
     Mat affine_matrix;
     Mat box_mask;
-    cout << "going preprocess"<<endl;
+    //cout << "going preprocess"<<endl;
     this->preprocess(target_img, target_landmark_5, source_face_embedding, affine_matrix, box_mask, buffers);
     buffers.copyInputToDevice();
 
@@ -383,7 +383,7 @@ cv::Mat SwapFace_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferM
     box_mask.setTo(0, box_mask < 0);
 	box_mask.setTo(1, box_mask > 1);
     Mat dstimg = paste_back(target_img, result, box_mask, affine_matrix);
-    imwrite("result99999.jpg", dstimg);
+    //imwrite("result99999.jpg", dstimg);
     return dstimg;
 
 

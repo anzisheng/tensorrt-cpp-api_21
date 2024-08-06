@@ -4,7 +4,7 @@ using namespace cv;
 using namespace std;
 //using namespace Ort;
 
-FaceEnhance_trt::FaceEnhance_trt(const std::string &onnxModelPath, const YoloV8Config &config)
+FaceEnhance_trt::FaceEnhance_trt(const std::string &onnxModelPath, const YoloV8Config &config, int method)
 {
     // Specify options for GPU inference
     Options options;
@@ -25,7 +25,7 @@ FaceEnhance_trt::FaceEnhance_trt(const std::string &onnxModelPath, const YoloV8C
     cout << "m_trtEngine_enhance have constrected"<<endl;
 
 
-    auto succ = m_trtEngine_enhance->buildLoadNetwork(onnxModelPath, SUB_VALS, DIV_VALS, NORMALIZE);
+    auto succ = m_trtEngine_enhance->buildLoadNetwork(onnxModelPath, SUB_VALS, DIV_VALS, NORMALIZE,1);
     if (!succ) {
         const std::string errMsg = "Error: Unable to build or load the TensorRT engine. "
                                    "Try increasing TensorRT log severity to kVERBOSE (in /libs/tensorrt-cpp-api/engine.cpp).";
@@ -126,7 +126,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
 
     Mat crop_img;
     affine_matrix = warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(512, 512));
-    imwrite("endhance_crop_last.jpg", crop_img);
+    //imwrite("endhance_crop_last.jpg", crop_img);
     const int crop_size[2] = {crop_img.cols, crop_img.rows};
     box_mask = create_static_box_mask(crop_size, this->FACE_MASK_BLUR, this->FACE_MASK_PADDING);
      
@@ -141,7 +141,7 @@ void FaceEnhance_trt::preprocess(Mat srcimg, const vector<Point2f> face_landmark
     const int image_area = 512 * 512;
     input_image.resize(3 * image_area);
     size_t single_chn_size = image_area * sizeof(float);
-    std::cout << "00000 " << endl;
+    //std::cout << "00000 " << endl;
     memcpy(input_image.data(), (float *)bgrChannels[2].data, single_chn_size); ///rgb顺序
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
@@ -292,7 +292,7 @@ Mat FaceEnhance_trt::process(cv::cuda::GpuMat gpuImbBGR, const vector<Point2f> t
 cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::BufferManager& buffers, Mat& affine_matrix, Mat& box_mask)
 {
     //const int outputSize = 512;
-    cout << "verifyOutput....."<< target_img.rows<<"  "<<target_img.cols <<endl;
+    //cout << "verifyOutput....."<< target_img.rows<<"  "<<target_img.cols <<endl;
     //imwrite("strange.jpg", target_img);
     
     float* output = static_cast<float*>(buffers.getHostBuffer("output")); // "output"
@@ -330,7 +330,7 @@ cv::Mat FaceEnhance_trt::verifyOutput(Mat &target_img, const samplesCommon::Buff
 	channel_mats[1] = gmat;
 	channel_mats[2] = rmat;
     Mat result;
-    cout << "begin merge" <<endl;
+    //cout << "begin merge" <<endl;
 
 	// merge(channel_mats, result);
     // imwrite("result.jpg", result);

@@ -16,7 +16,7 @@
 class SwapFace_trt
 {
 public:
-	SwapFace_trt(string model_path, const YoloV8Config &config);
+	SwapFace_trt(string model_path, const YoloV8Config &config, int method = 0);
 	cv::Mat process(cv::Mat target_img, const std::vector<float> source_face_embedding, const std::vector<cv::Point2f> target_landmark_5,samplesCommon::BufferManager &buffers);
 	void memoryFree();
 	std::unique_ptr<Engine<float>> m_trtEngine_faceswap = nullptr;

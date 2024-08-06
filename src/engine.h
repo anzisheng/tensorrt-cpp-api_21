@@ -72,7 +72,7 @@ public:
     //    divVals = {0.5f, 0.5f, 0.5f};
     //    normalize = true;
     bool buildLoadNetwork(std::string onnxModelPath, const std::array<float, 3> &subVals = {0.f, 0.f, 0.f},
-                          const std::array<float, 3> &divVals = {1.f, 1.f, 1.f}, bool normalize = true) override;
+                          const std::array<float, 3> &divVals = {1.f, 1.f, 1.f}, bool normalize = true,int method = 0) override;
 
     // Load a TensorRT engine file from disk into memory
     // The default implementation will normalize values between [0.f, 1.f]
@@ -118,6 +118,12 @@ public:
 //private:
     // Build the network
     bool build(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize);
+    bool build1(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize);
+
+    bool constructNetwork(std::string onnxModelPath, std::unique_ptr<nvinfer1::IBuilder>& builder,
+        std::unique_ptr<nvinfer1::INetworkDefinition>& network, std::unique_ptr<nvinfer1::IBuilderConfig>& config,
+        std::unique_ptr<nvonnxparser::IParser>& parser);
+
 
     // Converts the engine options into a string
     std::string serializeEngineOptions(const Options &options, const std::string &onnxModelPath);
@@ -141,7 +147,9 @@ public:
 
     // Must keep IRuntime around for inference, see:
     // https://forums.developer.nvidia.com/t/is-it-safe-to-deallocate-nvinfer1-iruntime-after-creating-an-nvinfer1-icudaengine-but-before-running-inference-with-said-icudaengine/255381/2?u=cyruspk4w6
-    std::unique_ptr<nvinfer1::IRuntime> m_runtime = nullptr;
+    //std::unique_ptr<nvinfer1::IRuntime> m_runtime = nullptr;
+    std::shared_ptr<nvinfer1::IRuntime> m_runtime = nullptr;
+
     std::unique_ptr<Int8EntropyCalibrator2> m_calibrator = nullptr;
     //std::unique_ptr<nvinfer1::ICudaEngine> m_engine = nullptr;
     std::shared_ptr<nvinfer1::ICudaEngine> m_engine = nullptr;

@@ -2,10 +2,10 @@
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include "util/Util.h"
-
+#include "common.h"
 template <typename T>
 bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals,
-                                 bool normalize) {
+                                 bool normalize, int method) {
     const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
     const auto engineDir = std::filesystem::path(m_options.engineFileDir);
     std::filesystem::path enginePath = engineDir / engineName;
@@ -26,7 +26,15 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
             spdlog::info("Created directory: {}", engineDir.string());
         }
         std::cout << "call engine build "<<enginePath <<std::endl;
-        auto ret = build(onnxModelPath, subVals, divVals, normalize);
+        auto ret = true;
+        if(method == 0)
+        {
+            /*auto*/ ret = build(onnxModelPath, subVals, divVals, normalize);
+        }
+        else if(method == 1)
+        {
+            /*auto*/ ret = build1(onnxModelPath, subVals, divVals, normalize);
+        }
         if (!ret) {
             return false;
         }
@@ -104,7 +112,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     // Storage for holding the input and output buffers
     // This will be passed to TensorRT for inference
     clearGpuBuffers();
-    std::cout <<"have clearGpuBuffers: " <<std::endl;
+    //std::cout <<"have clearGpuBuffers: " <<std::endl;
     m_buffers.resize(m_engine->getNbIOTensors());
     
 
@@ -115,6 +123,11 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     m_outputDims.clear();
     
     m_IOTensorNames.clear();
+
+    //  m_context->destroy();
+    //  m_engine->destroy();
+    //  m_runtime->destroy();
+
     
 
     // Create a cuda stream
@@ -127,7 +140,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
     for (int i = 0; i < m_engine->getNbIOTensors(); ++i) {
         const auto tensorName = m_engine->getIOTensorName(i);
         m_IOTensorNames.emplace_back(tensorName);
-        std::cout << i <<"th io: "<< tensorName <<std::endl;
+        //std::cout << i <<"th io: "<< tensorName <<std::endl;
         const auto tensorType = m_engine->getTensorIOMode(tensorName);
         const auto tensorShape = m_engine->getTensorShape(tensorName);
         const auto tensorDataType = m_engine->getTensorDataType(tensorName);
@@ -179,7 +192,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
                 throw std::runtime_error(msg);
             }
 
-            std::cout << " for io over" <<"th io: "<< tensorName <<std::endl;
+            //std::cout << " for io over" <<"th io: "<< tensorName <<std::endl;
 
             // The binding is an output
             uint32_t outputLength = 1;//anzisheng
@@ -190,7 +203,7 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
                 // into account when sizing the buffer
                 outputLength *= tensorShape.d[j];
             }
-            std::cout << " for nbDims over" <<"th io: "<< tensorName <<std::endl;
+            //std::cout << " for nbDims over" <<"th io: "<< tensorName <<std::endl;
 
             m_outputLengths.push_back(outputLength);
             // Now size the output buffer appropriately, taking into account the max
@@ -203,12 +216,12 @@ bool Engine<T>::loadNetwork(std::string trtModelPath, const std::array<float, 3>
             throw std::runtime_error(msg);
         }
     }
-    std::cout <<"m_engine->getNbIOTensors() is over: "<< std::endl;
+    //std::cout <<"m_engine->getNbIOTensors() is over: "<< std::endl;
 
     // Synchronize and destroy the cuda stream
     Util::checkCudaErrorCode(cudaStreamSynchronize(stream));
     Util::checkCudaErrorCode(cudaStreamDestroy(stream));
-    std::cout <<"loadNetwork() is over: "<< std::endl;
+    //std::cout <<"loadNetwork() is over: "<< std::endl;
     return true;
 }
 
@@ -397,5 +410,185 @@ bool Engine<T>::build(std::string onnxModelPath, const std::array<float, 3> &sub
     spdlog::info("Success, saved engine to {}", enginePath.string());
 
     Util::checkCudaErrorCode(cudaStreamDestroy(profileStream));
+    return true;
+}
+///////////////////////////////
+template <typename T>
+
+bool Engine<T>::constructNetwork(std::string onnxModelPath, std::unique_ptr<nvinfer1::IBuilder>& builder,
+        std::unique_ptr<nvinfer1::INetworkDefinition>& network, std::unique_ptr<nvinfer1::IBuilderConfig>& config,
+        std::unique_ptr<nvonnxparser::IParser>& parser)
+    {
+    //     auto parsed = parser->parseFromFile(onnxModelPath.c_str(),
+    //  static_cast<int>(sample::gLogger.getReportableSeverity()));
+    // std::vector<std::string> dataDirs;
+    // dataDirs.push_back("build/");
+    // dataDirs.push_back("data/");
+
+
+     auto parsed = parser->parseFromFile(onnxModelPath.c_str(), 4 );
+    if (!parsed)
+    {
+        return false;
+    }
+
+    // //if (mParams.fp16)
+    // {
+    //     config->setFlag(BuilderFlag::kFP16);
+    // }
+    // if (mParams.int8)
+    // {
+    //     config->setFlag(BuilderFlag::kINT8);
+    //     samplesCommon::setAllDynamicRanges(network.get(), 127.0F, 127.0F);
+    // }
+
+    //samplesCommon::enableDLA(builder.get(), config.get(), mParams.dlaCore);
+
+
+    // std::ifstream file(onnxModelPath, std::ios::binary | std::ios::ate);
+
+    // std::streamsize size = file.tellg();
+    // file.seekg(0, std::ios::beg);
+
+    // std::vector<char> buffer(size);
+    // if (!file.read(buffer.data(), size)) {
+    //     auto msg = "Error, unable to read engine file";
+    //     spdlog::error(msg);
+    //     throw std::runtime_error(msg);
+    // }
+    // std::cout << "Create a parser " <<std::endl;
+    // // Parse the buffer we read into memory.
+    // auto parsed = parser->parse(buffer.data(), buffer.size());
+    // if (!parsed) {
+    //     return false;
+    // }    
+    //      config->setFlag(nvinfer1::BuilderFlag::kFP16);
+    //     //samplesCommon::enableDLA(builder.get(), config.get(), mParams.dlaCore);
+
+    return true;
+
+    }
+
+/////////////////////
+
+template <typename T>
+bool Engine<T>::build1(std::string onnxModelPath, const std::array<float, 3> &subVals, const std::array<float, 3> &divVals, bool normalize) {
+ 
+    auto builder = std::unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(m_logger));
+    if (!builder)
+    {
+        return false;
+    }
+    const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    auto network = std::unique_ptr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
+    if (!network)
+    {
+        return false;
+    }
+    auto config = std::unique_ptr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
+    if (!config)
+    {
+        return false;
+    }
+
+    auto parser
+        = std::unique_ptr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, m_logger));
+    if (!parser)
+    {
+        return false;
+    }
+    auto constructed = constructNetwork(onnxModelPath, builder, network, config, parser);
+
+    // CUDA stream used for profiling by the builder.
+    auto profileStream = samplesCommon::makeCudaStream();
+    if (!profileStream)
+    {
+        return false;
+    }
+    config->setProfileStream(*profileStream);
+
+    //save plan
+    // Write the engine to disk
+    const auto engineName = serializeEngineOptions(m_options, onnxModelPath);// "inswapper_128.engine.NVIDIAGeForceRTX3080.fp16.1.1";//"gfpgan_1.4.engine.NVIDIAGeForceRTX3080.fp16.1.1";
+    if(!Util::doesFileExist(engineName))
+    {
+        std::unique_ptr<nvinfer1::IHostMemory> plan{builder->buildSerializedNetwork(*network, *config)};
+        if (!plan)
+        {
+            return false;
+        }
+        const auto enginePath = std::filesystem::path("./") / engineName;
+        std::ofstream outfile(enginePath, std::ofstream::binary);
+        outfile.write(reinterpret_cast<const char *>(plan->data()), plan->size());
+        //spdlog::info("Success, saved engine to {}", enginePath/*.string()*/);
+
+    }
+     else
+    {
+        std::cout << "loading eng file"<<std::endl;
+    }
+
+    //read the engine for work continue
+    /*
+    const auto enginePath = std::filesystem::path("./") / engineName;//std::filesystem::path("./") / engineName;
+    std::ifstream file(enginePath, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+
+    std::vector<char> buffer(size);
+    if (!file.read(buffer.data(), size)) {
+        auto msg = "Error, unable to read engine file";
+        spdlog::error(msg);
+        throw std::runtime_error(msg);
+    }
+
+    
+    m_runtime = std::unique_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(m_logger));
+    if (!m_runtime)
+    {
+        return false;
+    }
+
+
+    m_engine = std::shared_ptr<nvinfer1::ICudaEngine>(
+        m_runtime->deserializeCudaEngine(buffer.data(), buffer.size()), samplesCommon::InferDeleter()); //anzisheng
+    if (!m_engine)
+    {
+        return false;
+    }
+*/
+    // ASSERT(network->getNbInputs() == 2); //ansisheng ASSERT(network->getNbInputs() == 1);
+    // mInputDims = network->getInput(0)->getDimensions();
+    // ASSERT(mInputDims.nbDims == 4);
+
+    // ASSERT(network->getNbOutputs() == 1);
+    // mOutputDims = network->getOutput(0)->getDimensions();
+    // ASSERT(mOutputDims.nbDims == 4); //anzisheng ASSERT(mOutputDims.nbDims == 2)
+
+
+
+    // auto builder = std::unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(m_logger));
+    // if (!builder)
+    // {
+    //     return false;
+    // }
+    // auto builder = std::unique_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(m_logger));
+    // if (!builder) {
+    //     return false;
+    // }
+
+    // const auto explicitBatch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    // auto network = SampleUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch));
+    // if (!network)
+    // {
+    //     return false;
+    // }
+
+    // auto config = SampleUniquePtr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig());
+    // if (!config)
+    // {
+    //     return false;
+    // }
     return true;
 }

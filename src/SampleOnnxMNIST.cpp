@@ -185,7 +185,7 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     //sample::gLogInfo << "Input:" << std::endl;
 
     cv::Mat crop_img  = cv::imread("box_mask.jpg");
-    std::cout << "mnist crop_img: "<< crop_img.rows <<std::endl;
+    //std::cout << "mnist crop_img: "<< crop_img.rows <<std::endl;
     vector<cv::Mat> bgrChannels(3);
     split(crop_img, bgrChannels);
     for (int c = 0; c < 3; c++)
@@ -196,11 +196,11 @@ bool SampleOnnxMNIST::processInput(const samplesCommon::BufferManager& buffers)
     const int image_area = 512 * 512;
     input_image.resize(3 * image_area);
     size_t single_chn_size = image_area * sizeof(float);
-    std::cout << "00000 " << endl;
+    //std::cout << "00000 " << endl;
     memcpy(input_image.data(), (float *)bgrChannels[2].data, single_chn_size); ///rgb顺序
     memcpy(input_image.data() + image_area, (float *)bgrChannels[1].data, single_chn_size);
     memcpy(input_image.data() + image_area * 2, (float *)bgrChannels[0].data, single_chn_size);
-    std::cout << "1111 " << endl;
+    //std::cout << "1111 " << endl;
     float* hostDataBuffer0 = static_cast<float*>(buffers.getHostBuffer("input"));//static_cast<float*>(buffers.mManagedBuffers[0]->hostBuffer.data());
     // for (int i = 0; i < 512 * 512*3; i++)
     // {

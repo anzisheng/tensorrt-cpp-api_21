@@ -13,7 +13,7 @@
 class FaceEnhance_trt
 {
 public:
-	FaceEnhance_trt(const std::string &onnxModelPath, const YoloV8Config &config);
+	FaceEnhance_trt(const std::string &onnxModelPath, const YoloV8Config &config, int method = 0);
 	cv::Mat process(cv::Mat target_img, const std::vector<cv::Point2f> target_landmark_5,samplesCommon::BufferManager &buffers);
 	//cv::Mat process(cv::cuda::GpuMat gpuImbBGR, const std::vector<cv::Point2f> target_landmark_5);
 	//std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg);

@@ -45,17 +45,17 @@ int main(int argc, char *argv[]) {
    
   
     //SwapFace swap_face_net("inswapper_128.onnx");
-    SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config);
+    SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config, 1);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
     
     //samplesCommon::Args args; // 接收用户传递参数的变量
     //SampleOnnxMNIST sample(initializeSampleParams(args)); // 定义一个sample实例
     //FaceEnhance enhance_face_net("gfpgan_1.4.onnx");
-    FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config);
+    FaceEnhance_trt enhance_face_net_trt("gfpgan_1.4.onnx", config, 1);
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
 
-    cout << "gfpgan_1.4.onnx trted"<<endl;
+    //cout << "gfpgan_1.4.onnx trted"<<endl;
     preciseStopwatch stopwatch;
      // Read the input image
     cv::Mat img = cv::imread(inputImage);
@@ -118,10 +118,10 @@ int main(int argc, char *argv[]) {
 	detect_68landmarks_net_trt.detectlandmark(target_img, objects_target[position], target_landmark_5);
     
     cv::Mat swapimg = swap_face_net_trt.process(target_img, source_face_embedding, target_landmark_5, buffers);
-    imwrite("target_img.jpg", target_img);
+    //imwrite("target_img.jpg", target_img);
 //#ifdef SHOW        
-    std::cout << "swap_face_net.process end" <<std::endl;
-    imwrite("swapimg.jpg", swapimg);
+    //std::cout << "swap_face_net.process end" <<std::endl;
+    //imwrite("swapimg.jpg", swapimg);
 //#endif    
     
     cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);

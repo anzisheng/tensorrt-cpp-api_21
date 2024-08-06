@@ -49,7 +49,7 @@ FaceEmbdding_trt::FaceEmbdding_trt(string onnxModelPath, const YoloV8Config &con
 std::vector<float> FaceEmbdding_trt::detect(cv::Mat& srcimg,        std::vector<cv::Point2f>& face_landmark_5)
 {
     // first crop_img, then GPU
-    cout << "ect"<<endl;
+    //cout << "ect"<<endl;
     Mat crop_img;
     warp_face_by_face_landmark_5(srcimg, crop_img, face_landmark_5, this->normed_template, Size(112, 112));
     //imwrite("faceEmbedding_gpu.jpg", crop_img);
@@ -92,7 +92,7 @@ std::vector<float> FaceEmbdding_trt::postprocess(std::vector<float> &featureVect
 {
     const auto &outputDims = m_trtEngine_embedding->getOutputDims();
     auto numChannels = outputDims[0].d[1];
-    cout << "numChannels size:"<<numChannels<<endl;
+    //cout << "numChannels size:"<<numChannels<<endl;
     float *pdata = featureVector.data();
     //ofstream destFile2("embedding_cpp123.txt", ios::out); 
     //cout << "show face embedding output:\n";

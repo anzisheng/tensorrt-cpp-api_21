@@ -6,7 +6,7 @@ using namespace std;
 using namespace std;
 using namespace cv;
 
-Face68Landmarks_trt::Face68Landmarks_trt(const std::string &onnxModelPath, const YoloV8Config &config)
+Face68Landmarks_trt::Face68Landmarks_trt(const std::string &onnxModelPath, const YoloV8Config &config, int method)
 {
     cout << "Face68Landmarks_trt "<< onnxModelPath <<endl;
     

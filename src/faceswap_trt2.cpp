@@ -131,7 +131,7 @@ Mat SwapFace_trt2::process(Mat target_img, const vector<float> source_face_embed
 {
     Mat affine_matrix;
     Mat box_mask;
-    cout << "going preprocess"<<endl;
+    //cout << "going preprocess"<<endl;
     this->preprocess(target_img, target_landmark_5, source_face_embedding, affine_matrix, box_mask, buffers);
     buffers.copyInputToDevice();
 
