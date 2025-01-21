@@ -28,7 +28,8 @@ find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(fmt REQUIRED)
 
-add_library(tensorrt_cpp_api SHARED
+add_library(tensorrt_cpp_api
+        SHARED #STATIC                     #SHARED
         src/engine.cpp
         src/yolov8.cpp
         src/utils.cpp
@@ -37,7 +38,7 @@ add_library(tensorrt_cpp_api SHARED
         src/facerecognizer_trt.cpp
         src/faceswap_trt.cpp
         src/faceenhancer_trt.cpp
-        #src/SampleOnnxMNIST.cpp
+        src/GenderAge_trt.cpp
         )
 
 target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} 

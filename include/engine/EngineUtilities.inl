@@ -63,7 +63,8 @@ template <typename T> std::string Engine<T>::serializeEngineOptions(const Option
         throw std::runtime_error(msg);
     }
 
-    auto deviceName = deviceNames[options.deviceIndex];
+    //auto deviceName = deviceNames[options.deviceIndex];
+    std::string deviceName = deviceNames[options.deviceIndex];
     // Remove spaces from the device name
     deviceName.erase(std::remove_if(deviceName.begin(), deviceName.end(), ::isspace), deviceName.end());
 
@@ -82,6 +83,7 @@ template <typename T> std::string Engine<T>::serializeEngineOptions(const Option
     engineName += "." + std::to_string(options.optBatchSize);
 
     spdlog::info("Engine name: {}", engineName);
+
     return engineName;
 }
 

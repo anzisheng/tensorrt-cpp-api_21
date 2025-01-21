@@ -30,16 +30,19 @@ using namespace cv;
 
 int main(int argc, char *argv[]) {
    
-	   
+	std::cout << "hello..."<< std::endl;
     //tensorrt part
     YoloV8Config config;
     std::string onnxModelPath;
     std::string onnxModelPathLandmark;
     std::string inputImage = "1.jpg";
-    std::string outputImage = "6.jpg";
+    std::string outputImage = "12.jpg";
     
-    
+    //std::string inputImage = "12.jpg";
+    //std::string outputImage = "1.jpg";
+    std::cout << "world 000..."<< std::endl;
     YoloV8 yoloV8("yoloface_8n.onnx", config); //
+    std::cout << "what's the fuck..."<< std::endl;
     Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
     FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
    
