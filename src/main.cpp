@@ -20,6 +20,7 @@
 //#include "faceenhancer_trt2.h"
 #include "faceswap_trt.h"
 #include "SampleOnnxMNIST.h"
+#include "GenderAge_trt.h"
 //#include "faceswap.h"
 #include "engine.h"
 #include "utile.h"
@@ -46,7 +47,8 @@ int main(int argc, char *argv[]) {
     Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
     FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
    
-  
+    
+    FaceGederAge_trt gen_age("GenderAge.onnx", config);
     //SwapFace swap_face_net("inswapper_128.onnx");
     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config, 1);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
