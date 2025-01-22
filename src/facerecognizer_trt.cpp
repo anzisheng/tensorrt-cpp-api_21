@@ -76,7 +76,7 @@ std::vector<float> FaceEmbdding_trt::detect(cv::cuda::GpuMat &inputImageBGR,  st
     //
     const auto &numOutputs = m_trtEngine_embedding->getOutputDims().size();
     //cout << "befor postprocess"<<endl;
-    //cout <<"numOutputs size : " << numOutputs <<endl;
+    cout <<"embedding net numOutputs size : " << numOutputs <<endl;
     std::vector<float> ret;
     if (numOutputs == 1) {
 
@@ -92,7 +92,7 @@ std::vector<float> FaceEmbdding_trt::postprocess(std::vector<float> &featureVect
 {
     const auto &outputDims = m_trtEngine_embedding->getOutputDims();
     auto numChannels = outputDims[0].d[1];
-    //cout << "numChannels size:"<<numChannels<<endl;
+    cout << "embedding numChannels size:"<<numChannels<<endl;
     float *pdata = featureVector.data();
     //ofstream destFile2("embedding_cpp123.txt", ios::out); 
     //cout << "show face embedding output:\n";

@@ -53,8 +53,13 @@ vector<float> FaceGederAge_trt::process(const cv::Mat &imageBGR)
 
 std::vector<std::vector<cv::cuda::GpuMat>> FaceGederAge_trt::preprocess(const cv::cuda::GpuMat &gpuImg) {
     // Populate the input vectors
+    //std::vector<nvinfer1::Dims3> m_inputDims;
+    //[[nodiscard]] const std::vector<nvinfer1::Dims3> &getInputDims() const override { return m_inputDims; };
     const auto &inputDims = m_trtEngine_gen_age->getInputDims();
-    std::cout << "into gpu preprocess"<< std::endl;
+    //inputDims[0] reprsent for channel
+    //inputDims[0].d[1] represent for Height
+    //inputDims[0].d[2] represent for Width
+    std::cout << "into gpu preprocess, dims is :"<<inputDims[0]<<","<<inputDims[0].d[1] <<","<<inputDims[0].d[2] << std::endl;
 
     // Convert the image from BGR to RGB
     cv::cuda::GpuMat rgbMat;
@@ -73,6 +78,7 @@ std::vector<std::vector<cv::cuda::GpuMat>> FaceGederAge_trt::preprocess(const cv
     // The reason for the strange format is because it supports models with multiple inputs as well as batching
     // In our case though, the model only has a single input and we are using a batch size of 1.
     std::vector<cv::cuda::GpuMat> input{std::move(resized)};
+    //std::cout << "input channels: "<< input.size() <<std::endl;
     
     std::vector<std::vector<cv::cuda::GpuMat>> inputs{std::move(input)};
 
@@ -98,35 +104,46 @@ vector<float> FaceGederAge_trt::process(const cv::cuda::GpuMat &inputImageBGR){
         throw std::runtime_error("Error: Unable to run inference.");
     }
 
-    //std::vector<Object> ret;
+    //std::vector<Object> ret;    
     std::vector<float> ret;
     const auto &numOutputs = m_trtEngine_gen_age->getOutputDims().size(); // new output is 1x3
-    if (numOutputs == 1) {
-        // Object detection or pose estimation
-        // Since we have a batch size of 1 and only 1 output, we must convert the output from a 3D array to a 1D array.
+     if (numOutputs == 1) {
+
         std::vector<float> featureVector;
         Engine<float>::transformOutput(featureVectors, featureVector);
-        
-        const auto &outputDims = m_trtEngine_gen_age->getOutputDims();
-        int numChannels = outputDims[outputDims.size() - 1].d[1]; //get 3 channel
-        std::cout << "output channels:"<<numChannels <<std::endl;
-        // TODO: Need to improve this to make it more generic (don't use magic number).
-        // For now it works with Ultralytics pretrained models.
-        //if (numChannels == 56) {
-            // Pose estimation
-            //ret = postprocessPose(featureVector);
-        //} 
-        //else 
-        {
-            // Object detection
-            //ret = postprocessDetect(featureVector);
-            std::cout << "get gender and age" <<std::endl;
-            for(int i = 0; i< featureVector.size(); i++)
-            {
-                std::cout << featureVector[i]<<std::endl;
-            }
-        }
+        ret = postprocess(featureVector);
+        return ret;
     }
+    return ret;
 
 
+}
+
+std::vector<float> FaceGederAge_trt::postprocess(std::vector<float> &featureVector)
+{
+    const auto &outputDims = m_trtEngine_gen_age->getOutputDims();
+    auto numChannels = outputDims[0].d[1];
+    cout << "age numChannels size:"<<numChannels<<endl;
+    float *pdata = featureVector.data();
+    //ofstream destFile2("embedding_cpp123.txt", ios::out); 
+    //cout << "show face embedding output:\n";
+	// for(int i =0; i < (int)numChannels; i++)
+	// {
+	// 	destFile2 << pdata[i] << " " ;
+    //     cout << pdata[i] << " ";
+	// }
+	// destFile2.close();
+
+    //auto numAnchors = outputDims[0].d[2];
+    vector<float> embedding(numChannels);
+    //memcpy(embedding.data(), pdata, len_feature*sizeof(float));
+    cudaMemcpy(embedding.data(), pdata, numChannels*sizeof(float), cudaMemcpyHostToHost); //import not cudaMemcpyDeviceToHost
+    //cout << "cuda copy to host:"<<endl;
+    for(int i = 0 ; i < embedding.size(); i++)
+    {
+       cout << embedding[i] << "  ";
+    }
+    cout <<endl;
+
+    return embedding;
 }

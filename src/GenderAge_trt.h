@@ -21,7 +21,8 @@ class FaceGederAge_trt
     //void preProcess();
     std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg); 
 
-    void postProcess();
+    //void postProcess();
+    std::vector<float> postprocess(std::vector<float> &featureVector);
     std::unique_ptr<Engine<float>> m_trtEngine_gen_age = nullptr;
     // Used for image preprocessing
     // YoloV8 model expects values between [0.f, 1.f] so we use the following params

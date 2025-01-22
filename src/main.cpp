@@ -62,16 +62,18 @@ int main(int argc, char *argv[]) {
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
 
+    cv::Mat temp = cv::imread("temp.jpg");
+    std::cout << "get the gender and age"<<std::endl;
+    cv::imwrite("temp.jpg", temp);
+    gen_age.process(temp);
+
+
     //cout << "gfpgan_1.4.onnx trted"<<endl;
     preciseStopwatch stopwatch;
      // Read the input image
     cv::Mat img = cv::imread(inputImage);
     cv::Mat source_img = img.clone();
     
-    cv::Mat temp = cv::imread("temp.jpg");
-    std::cout << "get the gender and age"<<std::endl;
-    cv::imwrite("temp.jpg", temp);
-    gen_age.process(temp);
 
     std::vector<Object>objects = yoloV8.detectObjects(img);
     
