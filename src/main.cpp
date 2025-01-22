@@ -49,6 +49,8 @@ int main(int argc, char *argv[]) {
    
     
     FaceGederAge_trt gen_age("GenderAge.onnx", config);
+
+    
     //SwapFace swap_face_net("inswapper_128.onnx");
     SwapFace_trt swap_face_net_trt("inswapper_128.onnx", config, 1);
     samplesCommon::BufferManager buffers(swap_face_net_trt.m_trtEngine_faceswap->m_engine);
@@ -66,6 +68,10 @@ int main(int argc, char *argv[]) {
     cv::Mat img = cv::imread(inputImage);
     cv::Mat source_img = img.clone();
     
+    cv::Mat temp = cv::imread("temp.jpg");
+    std::cout << "get the gender and age"<<std::endl;
+    cv::imwrite("temp.jpg", temp);
+    gen_age.process(temp);
 
     std::vector<Object>objects = yoloV8.detectObjects(img);
     

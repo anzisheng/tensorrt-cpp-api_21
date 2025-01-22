@@ -11,9 +11,17 @@ class FaceGederAge_trt
     public:    
     // Builds the onnx model into a TensorRT engine, and loads the engine into memory
     FaceGederAge_trt(const std::string &onnxModelPath, const YoloV8Config &config, int method = 0);
+    vector<float> process(const cv::Mat &image);
+    vector<float> process(const cv::cuda::GpuMat &inputImageBGR);
+
+
 
 
     private:
+    //void preProcess();
+    std::vector<std::vector<cv::cuda::GpuMat>> preprocess(const cv::cuda::GpuMat &gpuImg); 
+
+    void postProcess();
     std::unique_ptr<Engine<float>> m_trtEngine_gen_age = nullptr;
     // Used for image preprocessing
     // YoloV8 model expects values between [0.f, 1.f] so we use the following params
