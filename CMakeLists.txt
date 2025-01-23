@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(tensorrt_cpp_api)
 
-#add_definitions(-DSHOW)
+add_definitions(-DSHOW)
 set(CMAKE_BUILD_TYPE Release)
 # TODO: Specify the path to TensorRT root dir
 set(TensorRT_DIR /usr/local/TensorRT-8.6.1.6/)
@@ -36,9 +36,10 @@ add_library(tensorrt_cpp_api
         src/utile.cpp
         src/Face68Landmarks_trt.cpp
         src/facerecognizer_trt.cpp
+        src/facerecognizer_trt2.cpp
         src/faceswap_trt.cpp
         src/faceenhancer_trt.cpp
-        src/GenderAge_trt.cpp
+        #src/GenderAge_trt.cpp
         )
 
 target_include_directories(tensorrt_cpp_api PUBLIC ${OpenCV_INCLUDE_DIRS} ${CUDA_INCLUDE_DIRS} ${TensorRT_INCLUDE_DIRS} 

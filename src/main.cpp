@@ -14,6 +14,7 @@
 //#include "face68landmarks.h"
 #include "Face68Landmarks_trt.h"
 #include "facerecognizer_trt.h"
+#include "facerecognizer_trt2.h"
 #include "faceenhancer_trt.h"
 //#include "faceenhancer.h"
 //#include "faceenhancer_trt.h"
@@ -46,9 +47,8 @@ int main(int argc, char *argv[]) {
     std::cout << "what's the fuck..."<< std::endl;
     Face68Landmarks_trt detect_68landmarks_net_trt("2dfan4.onnx", config);
     FaceEmbdding_trt face_embedding_net_trt("arcface_w600k_r50.onnx", config);
-   
     
-    FaceGederAge_trt gen_age("GenderAge.onnx", config);
+    FaceEmbdding_trt2 face_embedding_net_trt2("GenderAge.onnx", config);
 
     
     //SwapFace swap_face_net("inswapper_128.onnx");
@@ -62,10 +62,10 @@ int main(int argc, char *argv[]) {
     //FaceEnhance_trt2 enhance_face_net_trt2("gfpgan_1.4.onnx", config);
     samplesCommon::BufferManager buffers_enhance(enhance_face_net_trt.m_trtEngine_enhance->m_engine);
 
-    cv::Mat temp = cv::imread("temp.jpg");
-    std::cout << "get the gender and age"<<std::endl;
-    cv::imwrite("temp.jpg", temp);
-    gen_age.process(temp);
+    //cv::Mat temp = cv::imread("temp.jpg");
+    //std::cout << "get the gender and age"<<std::endl;
+    //cv::imwrite("temp.jpg", temp);
+    //gen_age.detect(temp);
 
 
     //cout << "gfpgan_1.4.onnx trted"<<endl;
@@ -106,8 +106,11 @@ int main(int argc, char *argv[]) {
 	}
     #endif
 
-    
+    vector<float> source_face_embedding2 = face_embedding_net_trt2.detect(source_img, face_landmark_5of68_trt);
+
     vector<float> source_face_embedding = face_embedding_net_trt.detect(source_img, face_landmark_5of68_trt);
+
+    
 
        
     cv::Mat target_img = cv::imread(outputImage);
