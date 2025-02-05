@@ -43,12 +43,16 @@ int main(int argc, char *argv[]) {
 
 
     cv::Mat img_styles = cv::imread(styles);
-    int x = 0;
-    int y = 0;
-    int rwidth = 2400;
-    int rheight = 4267;
-    cv::Rect rect = cv::Rect(x, y, rwidth, rheight);
-    cv::Mat matrect = img_styles(rect);
+    
+    // int index = 4;
+    // //for(int index = 0; index < 5; index++)
+    // //{
+    // int x = 0;
+    // int y = 0;
+    // int rwidth = 2400;
+    // int rheight = 4267;
+    // cv::Rect rect = cv::Rect(x + rwidth * index, y, rwidth, rheight);
+    // cv::Mat matrect = img_styles(rect);
     std::cout << "cut 000..."<< std::endl;
     //std::string inputImage = "12.jpg";
     //std::string outputImage = "1.jpg";
