@@ -127,6 +127,19 @@ int main(int argc, char *argv[]) {
     
 
        
+    // cv::Mat target_img = matrect;//cv::imread(outputImage);
+    // cv::Mat target_img2 =target_img.clone();
+
+    //int index = 0;
+    //for(int index = 0; index < 5; index++)
+    {
+    int x = 0;
+    int y = 0;
+    int rwidth = 2400;
+    int rheight = 4267;
+    cv::Rect rect = cv::Rect(x , y, rwidth*5, rheight);
+    cv::Mat matrect = img_styles(rect);
+
     cv::Mat target_img = matrect;//cv::imread(outputImage);
     cv::Mat target_img2 =target_img.clone();
 
@@ -155,8 +168,10 @@ int main(int argc, char *argv[]) {
 //#endif    
     
     cv::Mat resultimg = enhance_face_net_trt.process(swapimg, target_landmark_5, buffers_enhance);
-    
-    imwrite("resultimgend.jpg", resultimg);
+
+    //std::string output_result = fmt::format("output_{}.jpg", index);    
+    std::string output_result = fmt::format("output_{}.jpg", 1000);    
+    imwrite(output_result, resultimg);
 
     //if (!sample.build()) // 【主要】在build方法中构建网络，返回构建网络是否成功的状态
     // {
@@ -170,6 +185,7 @@ int main(int argc, char *argv[]) {
     // }
 	
     //preciseStopwatch stopwatch;
+    }
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
     cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
 
