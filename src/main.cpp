@@ -39,7 +39,17 @@ int main(int argc, char *argv[]) {
     std::string onnxModelPathLandmark;
     std::string inputImage = "1.jpg";
     std::string outputImage = "12.jpg";
-    
+    std::string styles = "styles.jpg";
+
+
+    cv::Mat img_styles = cv::imread(styles);
+    int x = 0;
+    int y = 0;
+    int rwidth = 2400;
+    int rheight = 4267;
+    cv::Rect rect = cv::Rect(x, y, rwidth, rheight);
+    cv::Mat matrect = img_styles(rect);
+    std::cout << "cut 000..."<< std::endl;
     //std::string inputImage = "12.jpg";
     //std::string outputImage = "1.jpg";
     std::cout << "world 000..."<< std::endl;
@@ -113,7 +123,7 @@ int main(int argc, char *argv[]) {
     
 
        
-    cv::Mat target_img = cv::imread(outputImage);
+    cv::Mat target_img = matrect;//cv::imread(outputImage);
     cv::Mat target_img2 =target_img.clone();
 
     std::vector<Object>objects_target = yoloV8.detectObjects(target_img);
